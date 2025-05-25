@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -95,6 +96,7 @@ public class EventControllerTest {
     }
 
     private Event createAndSaveEvent() {
+
         User assignee = createAndSaveUser();
         EventStatus status = createAndSaveStatus();
         Category cat = createAndSaveCategory();
@@ -102,7 +104,7 @@ public class EventControllerTest {
         Event e = new Event();
         e.setTitle(faker.lorem().sentence());
         e.setDescription(faker.lorem().sentence());
-        e.setEventDate(LocalDateTime.now().plusDays(1));
+        e.setEventDate(LocalDate.now().plusDays(1));
         e.setAssignee(assignee);
         e.setEventStatus(status);
         e.setCategories(Set.of(cat));
@@ -244,7 +246,7 @@ public class EventControllerTest {
         EventUpdateDTO dto = new EventUpdateDTO();
         dto.setTitle(JsonNullable.of("Новый заголовок"));
         dto.setDescription(JsonNullable.of("Новый текст"));
-        dto.setEventDate(JsonNullable.of(LocalDateTime.now().plusDays(5).toString()));
+        dto.setEventDate(JsonNullable.of(LocalDate.now().plusDays(5).toString()));
         dto.setAssigneeId(JsonNullable.of(newAssignee.getId()));
         dto.setStatus(JsonNullable.of(newStatus.getSlug()));
         dto.setCategoryIds(JsonNullable.of(Set.of(newCat.getId())));
