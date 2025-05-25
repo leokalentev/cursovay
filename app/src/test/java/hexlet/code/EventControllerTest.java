@@ -211,7 +211,7 @@ public class EventControllerTest {
         EventCreateDTO dto = new EventCreateDTO();
         dto.setTitle(faker.lorem().sentence());
         dto.setDescription(faker.lorem().sentence());
-        dto.setEventDate(LocalDateTime.now().plusDays(2).toString());
+        dto.setEventDate(LocalDate.now().plusDays(2).toString());
         dto.setAssigneeId(assignee.getId());
         dto.setStatus(status.getSlug());
         dto.setCategoryIds(Set.of(cat.getId()));

@@ -5,6 +5,7 @@ import hexlet.code.dto.EventStatusCreateDTO;
 import hexlet.code.dto.EventStatusUpdateDTO;
 import hexlet.code.model.EventStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.EventRepository;
 import hexlet.code.repository.EventStatusRepository;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.JWTUtils;
@@ -41,6 +42,7 @@ class EventStatusControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private EventStatusRepository repository;
+    @Autowired private EventRepository eventRepository;
     @Autowired private ObjectMapper om;
     @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
@@ -48,6 +50,7 @@ class EventStatusControllerTest {
 
     @BeforeEach
     void setup() {
+        eventRepository.deleteAll();
         repository.deleteAll();
         userRepository.deleteAll();
     }
