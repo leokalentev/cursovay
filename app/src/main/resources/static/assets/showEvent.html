@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Информация о мероприятии</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        nav {
+            background: #333;
+            padding: 1rem;
+        }
+        nav a {
+            color: #fff;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 2rem;
+            background-color: white;
+            margin: 2rem auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Информация о мероприятии</h2>
+    <p><strong>ID:</strong> <span id="event-id"></span></p>
+    <p><strong>Название:</strong> <span id="event-title"></span></p>
+    <p><strong>Описание:</strong> <span id="event-description"></span></p>
+    <p><strong>Статус:</strong> <span id="event-status"></span></p>
+    <p><strong>Дата проведения:</strong> <span id="event-date"></span></p>
+    <p><strong>Категории:</strong> <span id="event-categories"></span></p>
+    <p><strong>Исполнитель:</strong> <span id="event-assignee"></span></p>
+    <p><strong>Создано:</strong> <span id="event-createdAt"></span></p>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
+
+    // Получение id из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+
+    fetch(`/api/events/${eventId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(response => response.json())
+    .then(event => {
+        document.getElementById('event-id').textContent = event.id;
+        document.getElementById('event-title').textContent = event.title;
+        document.getElementById('event-description').textContent = event.description || '';
+        document.getElementById('event-status').textContent = event.status || '';
+        document.getElementById('event-date').textContent = event.eventDate || '';
+        document.getElementById('event-categories').textContent = event.categories?.map(c => c.name).join(', ') || '';
+        document.getElementById('event-assignee').textContent = event.assignee?.email || '';
+        document.getElementById('event-createdAt').textContent = event.createdAt || '';
+    })
+    .catch(err => {
+        alert('Ошибка при загрузке информации о мероприятии');
+    });
+</script>
+
+</body>
+</html>

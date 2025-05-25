@@ -50,7 +50,7 @@ public class DataInitializer {
     }
 
     private void initTaskStatuses(EventStatusRepository statusRepository) {
-        List<String> slugs = List.of("Не прошло", "прошло");
+        List<String> slugs = List.of("Не прошло", "Прошло");
 
         for (String slug : slugs) {
             boolean exists = statusRepository.existsBySlug(slug);

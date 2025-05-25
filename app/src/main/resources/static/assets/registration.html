@@ -1,0 +1,80 @@
+<!-- src/main/resources/static/registration.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Регистрация</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px;
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Регистрация</h2>
+  <form id="registrationForm">
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Пароль" required />
+    <button type="submit">Зарегистрироваться</button>
+    <p id="error" class="error"></p>
+  </form>
+  <p>Уже есть аккаунт? <a href="login.html">Войти</a></p>
+</div>
+
+<script>
+  document.getElementById("registrationForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      if (response.ok) {
+        // Успешно зарегистрировались — переходим на логин
+        window.location.href = "login.html";
+      } else {
+        const err = await response.json();
+        document.getElementById("error").innerText = err.message || "Ошибка регистрации";
+      }
+    } catch {
+      document.getElementById("error").innerText = "Ошибка сети";
+    }
+  });
+</script>
+</body>
+</html>

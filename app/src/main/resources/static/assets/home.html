@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Главная — Мероприятия</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        .container { padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
+        th { background: #f4f4f4; }
+        .error { color: red; }
+        .create-btn { margin-top: 1rem; padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h1>Список мероприятий</h1>
+    <div id="error" class="error"></div>
+    <table id="events-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Описание</th>
+            <th>Статус</th>
+            <th>Дата проведения</th>
+            <th>Создано</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button id="create-btn" class="create-btn" style="display:none;">Создать мероприятие</button>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
+
+    fetch('/api/events', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(res => {
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = 'login.html';
+        }
+        throw new Error('Ошибка при загрузке: ' + res.status);
+      }
+      return res.json();
+    })
+    .then(data => {
+      const tbody = document.querySelector('#events-table tbody');
+      const createBtn = document.getElementById('create-btn');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Мероприятий не найдено</td></tr>';
+        createBtn.style.display = 'block';
+        createBtn.addEventListener('click', () => {
+          // Исправленный путь
+          window.location.href = '/assets/createEvent.html';
+        });
+        return;
+      }
+      tbody.innerHTML = data.map(e => `
+            <tr onclick="window.location.href='showEvent.html?id=${e.id}'" style="cursor:pointer;">
+                <td>${e.id}</td>
+                <td>${e.title}</td>
+                <td>${e.description || ''}</td>
+                <td>${e.status}</td>
+                <td>${e.eventDate || ''}</td>
+                <td>${e.createdAt}</td>
+            </tr>
+      `).join('');
+    })
+    .catch(err => {
+      document.getElementById('error').innerText = err.message;
+    });
+</script>
+
+</body>
+</html>

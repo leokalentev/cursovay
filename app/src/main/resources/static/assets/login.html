@@ -1,0 +1,80 @@
+<!-- src/main/resources/static/login.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f4f4f4;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+        }
+        .container {
+          background-color: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input {
+          display: block;
+          width: 100%;
+          padding: 10px;
+          margin-bottom: 10px;
+        }
+        button {
+          padding: 10px;
+          width: 100%;
+          background-color: #2196F3;
+          color: white;
+          border: none;
+          cursor: pointer;
+        }
+        button:hover {
+          background-color: #1976D2;
+        }
+        .error {
+          color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Вход</h2>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Пароль" required />
+        <button type="submit">Войти</button>
+        <p id="error" class="error"></p>
+    </form>
+    <p>Нет аккаунта? <a href="registration.html">Зарегистрироваться</a></p>
+</div>
+
+<script>
+    document.getElementById("loginForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: email, password })
+        });
+        if (response.ok) {
+          const token = await response.text();
+          localStorage.setItem("token", token);
+          window.location.href = "home.html";
+        } else {
+          document.getElementById("error").innerText = "Неверные учетные данные";
+        }
+      } catch {
+        document.getElementById("error").innerText = "Ошибка сети";
+      }
+    });
+</script>
+</body>
+</html>
