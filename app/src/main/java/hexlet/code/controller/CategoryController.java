@@ -82,7 +82,8 @@ public class CategoryController {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         if (!category.getEvents().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Нельзя удалить категорию, связанную с событиями");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Нельзя удалить категорию, связанную с событиями");
         }
         repository.delete(category);
     }
