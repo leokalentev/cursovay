@@ -5,97 +5,85 @@
     <title>Создание мероприятия</title>
     <style>
         body {
-          font-family: Arial, sans-serif;
-          background-color: #e0e0e0;
-          margin: 0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
         }
-
-        header {
-          background-color: #4CAF50;
-          padding: 10px 20px;
-          color: white;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+        nav {
+            background: #333;
+            padding: 1rem;
         }
-
-        header a {
-          color: white;
-          margin-right: 15px;
-          text-decoration: none;
+        nav a {
+            color: #fff;
+            margin-right: 1rem;
+            text-decoration: none;
         }
-
+        nav a:hover {
+            text-decoration: underline;
+        }
         .container {
-          max-width: 500px;
-          background-color: white;
-          padding: 20px;
-          margin: 30px auto;
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            background-color: white;
+            margin: 2rem auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
-        input,
-        textarea,
-        select {
-          display: block;
-          width: 100%;
-          padding: 10px;
-          margin-bottom: 10px;
+        label {
+            display: block;
+            margin-top: 1rem;
         }
-
+        input, select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
         button {
-          padding: 10px;
-          width: 100%;
-          background-color: #4CAF50;
-          color: white;
-          border: none;
-          cursor: pointer;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
         }
-
-        button:hover {
-          background-color: #45a049;
-        }
-
         .error {
-          color: red;
+            color: red;
         }
     </style>
 </head>
 <body>
 
-<header>
-    <div>
-        <a href="home.html">Мероприятия</a>
-        <a href="statuses.html">Статусы мероприятий</a>
-        <a href="categories.html">Категории мероприятий</a>
-    </div>
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
     <a href="#" id="logout">Выйти</a>
-</header>
+</nav>
 
 <div class="container">
     <h2>Создать мероприятие</h2>
     <form id="createEventForm">
-        <input type="text" id="title" placeholder="Название" required />
-        <textarea id="description" placeholder="Описание"></textarea>
-
-        <label for="status">Статус:</label>
-        <select id="status" required>
-            <option value="">Выберите статус</option>
-        </select>
-
-        <label for="eventDate">Дата проведения:</label>
-        <input type="date" id="eventDate" />
-
-        <label for="categoryId">Категория:</label>
-        <select id="categoryId" required>
-            <option value="">Выберите категорию</option>
-        </select>
-
-        <label for="assigneeId">Исполнитель:</label>
-        <select id="assigneeId" required>
-            <option value="">Выберите исполнителя</option>
-        </select>
-
+        <label>Название:
+            <input type="text" id="title" placeholder="Название" required />
+        </label>
+        <label>Описание:
+            <textarea id="description" placeholder="Описание"></textarea>
+        </label>
+        <label>Статус:
+            <select id="status" required>
+                <option value="">Выберите статус</option>
+            </select>
+        </label>
+        <label>Дата проведения:
+            <input type="date" id="eventDate" />
+        </label>
+        <label>Категория:
+            <select id="categoryId" required>
+                <option value="">Выберите категорию</option>
+            </select>
+        </label>
+        <label>Исполнитель:
+            <select id="assigneeId" required>
+                <option value="">Выберите исполнителя</option>
+            </select>
+        </label>
         <button type="submit">Создать</button>
         <p id="error" class="error"></p>
     </form>
@@ -104,102 +92,92 @@
 <script>
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = 'login.html';
+        window.location.href = 'login.html';
     }
 
     document.getElementById('logout').addEventListener('click', () => {
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
     });
 
-    // Загружаем статусы
-    fetch('/api/eventStatuses', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
+    fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
       .then(res => res.json())
       .then(data => {
-        const statusSelect = document.getElementById('status');
-        data.forEach(status => {
-          const option = document.createElement('option');
-          option.value = status.slug;
-          option.textContent = status.name;
-          statusSelect.appendChild(option);
-        });
+          const statusSelect = document.getElementById('status');
+          data.forEach(status => {
+              const option = document.createElement('option');
+              option.value = status.slug;
+              option.textContent = status.name;
+              statusSelect.appendChild(option);
+          });
       });
 
-    // Загружаем категории
-    fetch('/api/categories', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
+    fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
       .then(res => res.json())
       .then(data => {
-        const categorySelect = document.getElementById('categoryId');
-        data.forEach(cat => {
-          const option = document.createElement('option');
-          option.value = cat.id;
-          option.textContent = cat.name;
-          categorySelect.appendChild(option);
-        });
+          const categorySelect = document.getElementById('categoryId');
+          data.forEach(cat => {
+              const option = document.createElement('option');
+              option.value = cat.id;
+              option.textContent = cat.name;
+              categorySelect.appendChild(option);
+          });
       });
 
-    // Загружаем пользователей
-    fetch('/api/users', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
+    fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token } })
       .then(res => res.json())
       .then(data => {
-        const assigneeSelect = document.getElementById('assigneeId');
-        data.forEach(user => {
-          const option = document.createElement('option');
-          option.value = user.id; // <-- Теперь используем id, а не email
-          option.textContent = user.email;
-          assigneeSelect.appendChild(option);
-        });
+          const assigneeSelect = document.getElementById('assigneeId');
+          data.forEach(user => {
+              const option = document.createElement('option');
+              option.value = user.id;
+              option.textContent = user.email;
+              assigneeSelect.appendChild(option);
+          });
       });
 
-    // Создание мероприятия
     document.getElementById('createEventForm').addEventListener('submit', async function (event) {
-      event.preventDefault();
+        event.preventDefault();
 
-      const title = document.getElementById('title').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const status = document.getElementById('status').value;
-      const eventDate = document.getElementById('eventDate').value;
-      const categoryId = parseInt(document.getElementById('categoryId').value);
-      const assigneeId = document.getElementById('assigneeId').value;
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const status = document.getElementById('status').value;
+        const eventDate = document.getElementById('eventDate').value;
+        const categoryId = parseInt(document.getElementById('categoryId').value);
+        const assigneeId = document.getElementById('assigneeId').value;
 
-      if (!title || !status || !categoryId || !assigneeId) {
-        document.getElementById('error').innerText = 'Все обязательные поля должны быть заполнены.';
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/events', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({
-            title,
-            description,
-            status,
-            eventDate,
-            category_ids: [categoryId],
-            assignee_id: assigneeId // <-- Теперь отправляем assignee_id
-          })
-        });
-
-        if (response.ok) {
-          alert('Мероприятие успешно создано!');
-          document.getElementById('createEventForm').reset();
-        } else {
-          const errorData = await response.json();
-          document.getElementById('error').innerText = errorData.message || 'Ошибка создания';
+        if (!title || !status || !categoryId || !assigneeId) {
+            document.getElementById('error').innerText = 'Все обязательные поля должны быть заполнены.';
+            return;
         }
-      } catch (error) {
-        document.getElementById('error').innerText = 'Ошибка сервера';
-      }
+
+        try {
+            const response = await fetch('/api/events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    title,
+                    description,
+                    status,
+                    eventDate,
+                    category_ids: [categoryId],
+                    assignee_id: assigneeId
+                })
+            });
+
+            if (response.ok) {
+                alert('Мероприятие успешно создано!');
+                document.getElementById('createEventForm').reset();
+            } else {
+                const errorData = await response.json();
+                document.getElementById('error').innerText = errorData.message || 'Ошибка создания';
+            }
+        } catch (error) {
+            document.getElementById('error').innerText = 'Ошибка сервера';
+        }
     });
 </script>
 

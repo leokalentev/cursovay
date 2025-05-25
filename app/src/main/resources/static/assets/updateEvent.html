@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать мероприятие</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        .container { padding: 2rem; background-color: white; margin: 2rem auto; width: 400px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        label { display: block; margin-top: 1rem; }
+        input, select { width: 100%; padding: 0.5rem; }
+        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Редактировать мероприятие</h2>
+    <form id="update-form">
+        <label>Название:
+            <input type="text" id="title">
+        </label>
+        <label>Описание:
+            <input type="text" id="description">
+        </label>
+        <label>Статус:
+            <select id="status"></select>
+        </label>
+        <label>Дата проведения:
+            <input type="date" id="eventDate"> <!-- Исправлено с event-date на eventDate -->
+        </label>
+        <label>Категория:
+            <select id="categoryId"></select>
+        </label>
+        <label>Исполнитель:
+            <select id="assigneeId"></select>
+        </label>
+        <button type="submit">Сохранить</button>
+    </form>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+    let originalEvent = {}; // Здесь сохраним оригинальные данные
+
+    // Загружаем данные события
+    fetch(`/api/events/${eventId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(res => res.json())
+    .then(event => {
+        originalEvent = event;
+        document.getElementById('title').value = event.title || '';
+        document.getElementById('description').value = event.description || '';
+        document.getElementById('eventDate').value = event.eventDate ? event.eventDate.substring(0,10) : '';
+
+        // Загружаем и заполняем статусы
+        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(res => res.json())
+            .then(statuses => {
+                const statusSelect = document.getElementById('status');
+                statuses.forEach(status => {
+                    const option = document.createElement('option');
+                    option.value = status.slug;
+                    option.textContent = status.name;
+                    statusSelect.appendChild(option);
+                });
+                statusSelect.value = event.status || '';
+            });
+
+        // Загружаем и заполняем категории
+        fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(res => res.json())
+            .then(categories => {
+                const categorySelect = document.getElementById('categoryId');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    categorySelect.appendChild(option);
+                });
+                if (event.categoryIds && event.categoryIds.length > 0) {
+                    categorySelect.value = event.categoryIds[0];
+                }
+            });
+
+        // Загружаем и заполняем исполнителей
+        fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(res => res.json())
+            .then(users => {
+                const assigneeSelect = document.getElementById('assigneeId');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.email;
+                    assigneeSelect.appendChild(option);
+                });
+                if (event.assigneeId) {
+                    assigneeSelect.value = event.assigneeId;
+                }
+            });
+    });
+
+    // Обработка формы обновления
+     document.getElementById('update-form').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const updatedEvent = {};
+
+    // Всегда отправляем title и status (не могут быть пустыми)
+    const title = document.getElementById('title').value.trim();
+    const status = document.getElementById('status').value;
+
+    updatedEvent.title = title;
+    updatedEvent.status = status;
+
+    // Опционально — description
+    const description = document.getElementById('description').value.trim();
+    if (description !== (originalEvent.description || '')) {
+      updatedEvent.description = description;
+    }
+
+    // Опционально — eventDate
+    const eventDate = document.getElementById('eventDate').value;
+    if (eventDate !== (originalEvent.eventDate ? originalEvent.eventDate.substring(0,10) : '')) {
+      updatedEvent.eventDate = eventDate;
+    }
+
+    // Опционально — category_ids
+    const categoryId = document.getElementById('categoryId').value;
+    if (categoryId && !originalEvent.categoryIds?.includes(parseInt(categoryId))) {
+      updatedEvent.category_ids = [parseInt(categoryId)];
+    }
+
+    // Опционально — assignee_id
+    const assigneeId = document.getElementById('assigneeId').value;
+    if (assigneeId && parseInt(assigneeId) !== originalEvent.assigneeId) {
+      updatedEvent.assignee_id = parseInt(assigneeId);
+    }
+
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(updatedEvent)
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+      alert('Мероприятие обновлено');
+      window.location.href = `showEvent.html?id=${eventId}`;
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка обновления: ' + err.message);
+    }
+  });
+</script>
+</body>
+</html>
