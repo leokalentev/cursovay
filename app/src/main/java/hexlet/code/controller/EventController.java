@@ -7,6 +7,7 @@ import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.EventMapper;
 import hexlet.code.repository.EventRepository;
 import hexlet.code.specification.EventSpecification;
+import hexlet.code.utils.UserUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,9 @@ public class EventController {
     @Autowired
     private EventSpecification specBuilder;
 
+    @Autowired
+    private UserUtils userUtils;
+
     @GetMapping("/events")
     public ResponseEntity<List<EventDTO>> index(EventDTO params) {
         var spec = specBuilder.build(params);
@@ -70,6 +74,11 @@ public class EventController {
         var event = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
+        var currentUser = userUtils.getCurrentUser();
+        if (!event.getAssignee().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет прав на изменения");
+        }
+
         if (!dto.getTitle().isPresent() || dto.getTitle().get().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле title обязательно и не может быть пустым");
         }
@@ -86,7 +95,12 @@ public class EventController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void destroy(@PathVariable Long id) {
         var event = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Нет прав на изменения"));
+
+        var currentUser = userUtils.getCurrentUser();
+        if (!event.getAssignee().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
         repository.delete(event);
     }
 }

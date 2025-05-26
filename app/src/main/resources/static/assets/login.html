@@ -67,7 +67,13 @@
         if (response.ok) {
           const token = await response.text();
           localStorage.setItem("token", token);
-          window.location.href = "home.html";
+
+          // Проверка: если email == admin@kpfu.ru, перенаправляем на home.html, иначе на usersHome.html
+          if (email === "admin@kpfu.ru") {
+            window.location.href = "home.html";
+          } else {
+            window.location.href = "users/usersHome.html"; // путь в папке static/users
+          }
         } else {
           document.getElementById("error").innerText = "Неверные учетные данные";
         }

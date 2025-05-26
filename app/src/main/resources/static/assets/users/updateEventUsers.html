@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать мероприятие</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        .container { padding: 2rem; background: white; width: 400px; margin: 2rem auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        label { display: block; margin-top: 1rem; }
+        input, select { width: 100%; padding: 0.5rem; }
+        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="usersHome.html">Мои мероприятия</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Редактировать мероприятие</h2>
+    <form id="update-form">
+        <label>Название:
+            <input type="text" id="title">
+        </label>
+        <label>Описание:
+            <input type="text" id="description">
+        </label>
+        <label>Статус:
+            <select id="status"></select>
+        </label>
+        <label>Дата проведения:
+            <input type="date" id="eventDate">
+        </label>
+        <label>Категория:
+            <select id="categoryId"></select>
+        </label>
+        <label>Исполнитель:
+            <select id="assigneeId" disabled></select>
+        </label>
+        <button type="submit">Сохранить</button>
+        <p id="error" style="color:red;"></p>
+    </form>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) location.href = 'login.html';
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      location.href = 'login.html';
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+    let originalEvent = {};
+    let currentUserId = null;
+
+    // Получение текущего пользователя
+    fetch('/api/users/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(r => r.json())
+      .then(user => {
+        currentUserId = user.id;
+        const sel = document.getElementById('assigneeId');
+        const opt = document.createElement('option');
+        opt.value = user.id;
+        opt.textContent = user.email;
+        sel.appendChild(opt);
+        sel.value = user.id;
+      });
+
+    // Получение данных мероприятия
+    fetch(`/api/events/${eventId}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(r => r.json())
+      .then(event => {
+        originalEvent = event;
+        document.getElementById('title').value = event.title || '';
+        document.getElementById('description').value = event.description || '';
+        document.getElementById('eventDate').value = event.eventDate?.substring(0, 10) || '';
+
+        // Статусы
+        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
+          .then(r => r.json())
+          .then(statuses => {
+            const s = document.getElementById('status');
+            statuses.forEach(st => {
+              const o = document.createElement('option');
+              o.value = st.slug;
+              o.textContent = st.name;
+              s.appendChild(o);
+            });
+            s.value = event.status || '';
+          });
+
+        // Категории
+        fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
+          .then(r => r.json())
+          .then(cats => {
+            const c = document.getElementById('categoryId');
+            cats.forEach(cat => {
+              const o = document.createElement('option');
+              o.value = cat.id;
+              o.textContent = cat.name;
+              c.appendChild(o);
+            });
+            if (event.categoryIds?.length > 0) {
+              c.value = event.categoryIds[0];
+            }
+          });
+      });
+
+    // Обновление мероприятия
+    document.getElementById('update-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value.trim();
+      const status = document.getElementById('status').value;
+      const description = document.getElementById('description').value.trim();
+      const eventDate = document.getElementById('eventDate').value;
+      const categoryId = parseInt(document.getElementById('categoryId').value);
+
+      const updatedEvent = { title, status };
+
+      if (description !== (originalEvent.description || '')) {
+        updatedEvent.description = description;
+      }
+
+      if (eventDate !== (originalEvent.eventDate?.substring(0, 10) || '')) {
+        updatedEvent.eventDate = eventDate;
+      }
+
+      if (!isNaN(categoryId) && !originalEvent.categoryIds?.includes(categoryId)) {
+        updatedEvent.category_ids = [categoryId];
+      }
+
+      try {
+        const res = await fetch(`/api/events/${eventId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(updatedEvent)
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => null);
+          throw new Error(err?.detail || 'Ошибка обновления');
+        }
+
+        alert('Мероприятие обновлено');
+        location.href = `showEventUsers.html?id=${eventId}`;
+      } catch (err) {
+        document.getElementById('error').innerText = 'Ошибка обновления: ' + err.message;
+      }
+    });
+</script>
+
+</body>
+</html>

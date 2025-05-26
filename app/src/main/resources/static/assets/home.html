@@ -2,14 +2,24 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <title>Главная — Мероприятия</title>
+    <title>Главная — Мероприятия (Админ)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         nav { background: #333; padding: 1rem; }
         nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
         nav a:hover { text-decoration: underline; }
         .container { padding: 2rem; }
-        .error { color: red; }
+        .error { color: red; margin-bottom: 1rem; }
+        .filters {
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-bottom: 1rem;
+        }
+        .filters > * {
+          padding: 0.5rem;
+          font-size: 1rem;
+        }
         .create-btn {
           margin-bottom: 1.5rem;
           padding: 10px 20px;
@@ -22,8 +32,6 @@
           transition: background-color 0.3s ease;
         }
         .create-btn:hover { background-color: #45a049; }
-
-        /* Сетка карточек */
         .cards {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -38,43 +46,21 @@
           flex-direction: column;
           justify-content: space-between;
         }
-        .card h2 {
-          margin: 0 0 0.5rem;
-          font-size: 1.25rem;
-          color: #333;
+        .card h2 { margin: 0 0 0.5rem; font-size: 1.25rem; color: #333; }
+        .card p { flex-grow: 1; margin: 0 0 1rem; color: #555; }
+        .btn-group { display: flex; gap: 0.5rem; }
+        .btn-group button {
+          padding: 8px 12px;
+          font-size: 0.9rem;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
         }
-        .card p {
-          flex-grow: 1;
-          margin: 0 0 1rem;
-          color: #555;
-        }
-        .card .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-.card button {
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.card .view-btn {
-  background-color: #007bff;
-  color: white;
-}
-.card .view-btn:hover {
-  background-color: #0056b3;
-}
-.card .edit-btn {
-  background-color: #6c757d; /* серый */
-  color: white;
-}
-.card .edit-btn:hover {
-  background-color: #5a6268;
-}
-
+        .view-btn { background-color: #007bff; color: white; }
+        .view-btn:hover { background-color: #0056b3; }
+        .edit-btn { background-color: #6c757d; color: white; }
+        .edit-btn:hover { background-color: #5a6268; }
     </style>
 </head>
 <body>
@@ -89,62 +75,134 @@
 <div class="container">
     <h1>Список мероприятий</h1>
     <div id="error" class="error"></div>
-    <button id="create-btn" class="create-btn">Создать мероприятие</button>
-    <div class="cards" id="cards-container">
-        <!-- сюда вставятся карточки -->
+
+    <!-- Форма фильтров -->
+    <div class="filters" id="filters">
+        <input type="text" id="filter-title" placeholder="По названию" />
+        <select id="filter-status">
+            <option value="">Все статусы</option>
+        </select>
+        <select id="filter-category">
+            <option value="">Все категории</option>
+        </select>
+        <input type="date" id="filter-date" />
+        <button id="apply-filters">Применить</button>
+        <button id="clear-filters">Сбросить</button>
     </div>
+
+    <button id="create-btn" class="create-btn">Создать мероприятие</button>
+    <div class="cards" id="cards-container"><!-- карточки --></div>
 </div>
 
 <script>
     const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
+    if (!token) location.href = 'login.html';
 
-    document.getElementById('logout').addEventListener('click', () => {
+    // Уходим сессии
+    document.getElementById('logout').onclick = () => {
       localStorage.removeItem('token');
-      window.location.href = 'login.html';
-    });
+      location.href = 'login.html';
+    };
 
-    document.getElementById('create-btn').addEventListener('click', () => {
-      window.location.href = 'createEvent.html';
-    });
+    document.getElementById('create-btn').onclick = () => {
+      location.href = 'createEvent.html';
+    };
 
-    fetch('/api/events', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(res => {
-      if (!res.ok) {
-        if (res.status === 401) {
-          localStorage.removeItem('token');
-          window.location.href = 'login.html';
-        }
-        throw new Error('Ошибка при загрузке: ' + res.status);
-      }
-      return res.json();
-    })
-    .then(events => {
+    // Загрузка статусов и категорий для фильтров
+    let statuses = [], categories = [];
+
+    async function loadLookups() {
+      const [stRes, catRes] = await Promise.all([
+        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token }}),
+        fetch('/api/categories',      { headers: { 'Authorization': 'Bearer ' + token }})
+      ]);
+      statuses   = await stRes.json();
+      categories = await catRes.json();
+
+      const stSel = document.getElementById('filter-status');
+      statuses.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.slug;
+        opt.textContent = s.name;
+        stSel.appendChild(opt);
+      });
+
+      const catSel = document.getElementById('filter-category');
+      categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        catSel.appendChild(opt);
+      });
+    }
+
+    // Основная функция загрузки и рендера событий
+    async function loadEvents() {
+      const params = new URLSearchParams();
+      const t = document.getElementById('filter-title').value.trim();
+      const s = document.getElementById('filter-status').value;
+      const c = document.getElementById('filter-category').value;
+      const d = document.getElementById('filter-date').value;
+      if (t) params.set('title', t);
+      if (s) params.set('status', s);
+      if (c) params.set('category_ids', c);
+      if (d) params.set('eventDate', d);
+
+      // Профиль нужен, чтобы знать currentUserId
+      const [userRes, eventsRes] = await Promise.all([
+        fetch('/api/users/me',      { headers: { 'Authorization': 'Bearer ' + token }}),
+        fetch(`/api/events?${params}`, { headers: { 'Authorization': 'Bearer ' + token }})
+      ]);
+
+      if (!userRes.ok) throw new Error('Не удалось получить профиль');
+      if (!eventsRes.ok) throw new Error('Ошибка при загрузке мероприятий: ' + eventsRes.status);
+
+      const user   = await userRes.json();
+      const events = await eventsRes.json();
+      renderCards(events, user.id);
+    }
+
+    // Рендер карточек с учётом того, кто их создал
+    function renderCards(events, currentUserId) {
       const container = document.getElementById('cards-container');
-      if (events.length === 0) {
+      if (!events.length) {
         container.innerHTML = '<p>Мероприятий не найдено.</p>';
         return;
       }
-      container.innerHTML = events.map(e => `
-        <div class="card">
-          <h2>${e.title}</h2>
-          <p>${e.description || 'Описание отсутствует'}</p>
-          <div class="btn-group">
-            <button class="view-btn" onclick="window.location.href='showEvent.html?id=${e.id}'">
-              Просмотр
-            </button>
-            <button class="edit-btn" onclick="window.location.href='updateEvent.html?id=${e.id}'">
-              Изменить
-            </button>
+      container.innerHTML = events.map(e => {
+        const canEdit = e.assignee_id === currentUserId;
+        return `
+          <div class="card">
+            <h2>${e.title}</h2>
+            <p>${e.description || 'Описание отсутствует'}</p>
+            <div class="btn-group">
+              <button class="view-btn" onclick="location.href='showEvent.html?id=${e.id}'">
+                Просмотр
+              </button>
+              ${canEdit ? `
+              <button class="edit-btn" onclick="location.href='updateEvent.html?id=${e.id}'">
+                Изменить
+              </button>` : ''}
+            </div>
           </div>
-        </div>
-      `).join('');
-    })
-    .catch(err => {
-      document.getElementById('error').textContent = err.message;
-    });
+        `;
+      }).join('');
+    }
+
+    // Привязываем кнопки фильтрации
+    document.getElementById('apply-filters').onclick = () => {
+      loadEvents().catch(e => document.getElementById('error').textContent = e.message);
+    };
+    document.getElementById('clear-filters').onclick = () => {
+      ['filter-title','filter-status','filter-category','filter-date']
+        .forEach(id => document.getElementById(id).value = '');
+      loadEvents().catch(e => document.getElementById('error').textContent = e.message);
+    };
+
+    // Инициализация
+    loadLookups()
+      .then(loadEvents)
+      .catch(e => document.getElementById('error').textContent = e.message);
 </script>
 
 </body>

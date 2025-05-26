@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная — Мероприятия (Пользователь)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        .container { padding: 2rem; }
+        .error { color: red; margin-bottom: 1rem; }
+        .filters {
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-bottom: 1rem;
+        }
+        .filters > * {
+          padding: 0.5rem;
+          font-size: 1rem;
+        }
+        .create-btn {
+          margin-bottom: 1.5rem;
+          padding: 10px 20px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background-color 0.3s ease;
+        }
+        .create-btn:hover { background-color: #45a049; }
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .card {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .card h2 { margin: 0 0 0.5rem; font-size: 1.25rem; color: #333; }
+        .card p { flex-grow: 1; margin: 0 0 1rem; color: #555; }
+        .btn-group { display: flex; gap: 0.5rem; }
+        .btn-group button {
+          padding: 8px 12px;
+          font-size: 0.9rem;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+        .view-btn { background-color: #007bff; color: white; }
+        .view-btn:hover { background-color: #0056b3; }
+        .edit-btn { background-color: #28a745; color: white; }
+        .edit-btn:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="usersHome.html">Мероприятия</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h1>Список мероприятий</h1>
+    <div id="error" class="error"></div>
+
+    <!-- Фильтры -->
+    <div class="filters" id="filters">
+        <input type="text" id="filter-title" placeholder="По названию" />
+        <select id="filter-status">
+            <option value="">Все статусы</option>
+        </select>
+        <select id="filter-category">
+            <option value="">Все категории</option>
+        </select>
+        <input type="date" id="filter-date" />
+        <button id="apply-filters">Применить</button>
+        <button id="clear-filters">Сбросить</button>
+    </div>
+
+    <button id="create-btn" class="create-btn">Создать мероприятие</button>
+    <div class="cards" id="cards-container"></div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) location.href = 'login.html';
+
+    document.getElementById('logout').onclick = () => {
+        localStorage.removeItem('token');
+        location.href = 'login.html';
+    };
+
+    document.getElementById('create-btn').onclick = () => {
+        location.href = 'createEventUsers.html';
+    };
+
+    let statuses = [], categories = [];
+
+    async function loadLookups() {
+        const [statusRes, categoryRes] = await Promise.all([
+            fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } }),
+            fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
+        ]);
+        statuses = await statusRes.json();
+        categories = await categoryRes.json();
+
+        const stSel = document.getElementById('filter-status');
+        statuses.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.slug;
+            opt.textContent = s.name;
+            stSel.appendChild(opt);
+        });
+
+        const catSel = document.getElementById('filter-category');
+        categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            catSel.appendChild(opt);
+        });
+    }
+
+    async function loadEvents() {
+        const params = new URLSearchParams();
+        const title = document.getElementById('filter-title').value.trim();
+        const status = document.getElementById('filter-status').value;
+        const category = document.getElementById('filter-category').value;
+        const date = document.getElementById('filter-date').value;
+        if (title) params.set('title', title);
+        if (status) params.set('status', status);
+        if (category) params.set('category_ids', category);
+        if (date) params.set('eventDate', date);
+
+        const res = await fetch('/api/events?' + params.toString(), {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (!res.ok) {
+            document.getElementById('error').textContent = 'Ошибка загрузки: ' + res.status;
+            return;
+        }
+
+        const events = await res.json();
+        renderCards(events);
+    }
+
+    function renderCards(events) {
+        const c = document.getElementById('cards-container');
+        if (!events.length) {
+            c.innerHTML = '<p>Мероприятий не найдено.</p>';
+            return;
+        }
+
+        c.innerHTML = events.map(e => `
+            <div class="card">
+                <h2>${e.title}</h2>
+                <p>${e.description || 'Описание отсутствует'}</p>
+                <div class="btn-group">
+                    <button class="view-btn" onclick="location.href='showEventUsers.html?id=${e.id}'">Просмотр</button>
+                    <button class="edit-btn" onclick="location.href='updateEventUsers.html?id=${e.id}'">Изменить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('apply-filters').onclick = () => {
+        loadEvents().catch(e => document.getElementById('error').textContent = e.message);
+    };
+    document.getElementById('clear-filters').onclick = () => {
+        document.getElementById('filter-title').value = '';
+        document.getElementById('filter-status').value = '';
+        document.getElementById('filter-category').value = '';
+        document.getElementById('filter-date').value = '';
+        loadEvents().catch(e => document.getElementById('error').textContent = e.message);
+    };
+
+    loadLookups().then(loadEvents).catch(e => document.getElementById('error').textContent = e.message);
+</script>
+
+</body>
+</html>

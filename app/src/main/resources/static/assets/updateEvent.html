@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Редактировать мероприятие</title>
+    <title>Редактировать мероприятие (Админ)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
         nav { background: #333; padding: 1rem; }
@@ -122,66 +122,61 @@
     });
 
     // Обработка формы обновления
-     document.getElementById('update-form').addEventListener('submit', async e => {
-    e.preventDefault();
+ document.getElementById('update-form').addEventListener('submit', async e => {
+  e.preventDefault();
 
-    const updatedEvent = {};
+  const updatedEvent = {};
 
-    // Всегда отправляем title и status (не могут быть пустыми)
-    const title = document.getElementById('title').value.trim();
-    const status = document.getElementById('status').value;
+  // title и status обязательны
+  const title = document.getElementById('title').value.trim();
+  const status = document.getElementById('status').value;
+  updatedEvent.title = title;
+  updatedEvent.status = status;
 
-    updatedEvent.title = title;
-    updatedEvent.status = status;
+  // description
+  const description = document.getElementById('description').value.trim();
+  if (description !== (originalEvent.description || '')) {
+    updatedEvent.description = description;
+  }
 
-    // Опционально — description
-    const description = document.getElementById('description').value.trim();
-    if (description !== (originalEvent.description || '')) {
-      updatedEvent.description = description;
+  // date
+  const eventDate = document.getElementById('eventDate').value;
+  if (eventDate !== (originalEvent.eventDate?.substring(0,10) || '')) {
+    updatedEvent.eventDate = eventDate;
+  }
+
+  // категория
+  const categoryId = parseInt(document.getElementById('categoryId').value);
+  if (!isNaN(categoryId) && !originalEvent.categoryIds?.includes(categoryId)) {
+    updatedEvent.category_ids = [categoryId];
+  }
+
+  // исполнитель
+  const assigneeId = parseInt(document.getElementById('assigneeId').value);
+  if (originalEvent.assigneeId !== assigneeId) {
+    updatedEvent.assigneeId = assigneeId;
+  }
+
+  try {
+    const res = await fetch(`/api/events/${eventId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify(updatedEvent)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.detail || 'Ошибка обновления');
     }
-
-    // Опционально — eventDate
-    const eventDate = document.getElementById('eventDate').value;
-    if (eventDate !== (originalEvent.eventDate ? originalEvent.eventDate.substring(0,10) : '')) {
-      updatedEvent.eventDate = eventDate;
-    }
-
-    // Опционально — category_ids
-    const categoryId = document.getElementById('categoryId').value;
-    if (categoryId && !originalEvent.categoryIds?.includes(parseInt(categoryId))) {
-      updatedEvent.category_ids = [parseInt(categoryId)];
-    }
-
-    // Опционально — assignee_id
-    const assigneeId = document.getElementById('assigneeId').value;
-    if (assigneeId && parseInt(assigneeId) !== originalEvent.assigneeId) {
-      updatedEvent.assignee_id = parseInt(assigneeId);
-    }
-
-        try {
-      const res = await fetch(`/api/events/${eventId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify(updatedEvent)
-      });
-      if (!res.ok) {
-        let errDetail = 'Ошибка обновления';
-        try {
-          const errData = await res.json();
-          errDetail = errData.detail || errDetail;
-        } catch (_) {}
-        throw new Error(errDetail);
-      }
-      alert('Мероприятие обновлено');
-      window.location.href = `showEvent.html?id=${eventId}`;
-    } catch (err) {
-      console.error(err);
-      alert('Ошибка обновления: ' + err.message);
-    }
-  });
+    alert('Мероприятие обновлено');
+    window.location.href = `showEvent.html?id=${eventId}`;
+  } catch (err) {
+    console.error(err);
+    alert('Ошибка обновления: ' + err.message);
+  }
+});
 </script>
 </body>
 </html>
