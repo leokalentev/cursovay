@@ -110,6 +110,19 @@ public class EventControllerTest {
         return repository.save(e);
     }
 
+    private Event createAndSaveEventWithAssignee(User assignee) {
+        EventStatus status = createAndSaveStatus();
+        Category cat = createAndSaveCategory();
+
+        Event e = new Event();
+        e.setTitle(faker.lorem().sentence());
+        e.setDescription(faker.lorem().sentence());
+        e.setEventDate(LocalDate.now().plusDays(1));
+        e.setAssignee(assignee);
+        e.setEventStatus(status);
+        e.setCategories(Set.of(cat));
+        return repository.save(e);
+    }
     @Test
     public void index() throws Exception {
         String token = createUserAndGetToken();
@@ -235,9 +248,9 @@ public class EventControllerTest {
 
     @Test
     public void updateEvent() throws Exception {
-        String token = createUserAndGetToken();
-        Event e = createAndSaveEvent();
-
+        User assignee = createAndSaveUser();
+        String token = jwtUtils.generateToken(assignee.getEmail());
+        Event e = createAndSaveEventWithAssignee(assignee);
         User newAssignee = createAndSaveUser();
         EventStatus newStatus = createAndSaveStatus();
         Category newCat = createAndSaveCategory();
@@ -270,8 +283,9 @@ public class EventControllerTest {
 
     @Test
     public void deleteEvent() throws Exception {
-        String token = createUserAndGetToken();
-        Event e = createAndSaveEvent();
+        User assignee = createAndSaveUser();
+        String token = jwtUtils.generateToken(assignee.getEmail());
+        Event e = createAndSaveEventWithAssignee(assignee);
 
         mockMvc.perform(delete("/api/events/{id}", e.getId())
                         .header("Authorization", "Bearer " + token))
@@ -279,6 +293,7 @@ public class EventControllerTest {
 
         assertThat(repository.findById(e.getId())).isEmpty();
     }
+
 }
 
 
