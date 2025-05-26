@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Статусы мероприятий</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    nav { background: #333; padding: 1rem; }
+    nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    .container { padding: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
+    th { background: #f4f4f4; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="home.html">Мероприятия</a>
+  <a href="statuses.html">Статусы мероприятий</a>
+  <a href="categories.html">Категории мероприятий</a>
+  <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+  <h1>Список статусов мероприятий</h1>
+  <div id="error" class="error"></div>
+  <table id="statuses-table">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Slug</th>
+      <th>Дата создания</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+   <button onclick="window.location.href='createStatus.html'" style="display:none;">Создать статус</button>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) {
+      window.location.href = 'login.html';
+  }
+
+  document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+  });
+
+  fetch('/api/eventStatuses', {
+      headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(res => {
+      if (!res.ok) {
+          if (res.status === 401) {
+              localStorage.removeItem('token');
+              window.location.href = 'login.html';
+          }
+          throw new Error('Ошибка при загрузке: ' + res.status);
+      }
+      return res.json();
+  })
+  .then(data => {
+    const tbody = document.querySelector('#statuses-table tbody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">Статусы не найдены</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(status => `
+        <tr onclick="window.location.href='showStatus.html?id=${status.id}'" style="cursor:pointer;">
+            <td>${status.id}</td>
+            <td>${status.name}</td>
+            <td>${status.slug}</td>
+            <td>${status.createdAt || ''}</td>
+        </tr>
+    `).join('');
+})
+  .catch(err => {
+      document.getElementById('error').innerText = err.message;
+  });
+</script>
+
+</body>
+</html>

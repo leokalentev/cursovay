@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Создание статуса мероприятия</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        nav {
+            background: #333;
+            padding: 1rem;
+        }
+        nav a {
+            color: #fff;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 2rem;
+            background-color: white;
+            margin: 2rem auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+        }
+        button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Создать статус мероприятия</h2>
+    <form id="createStatusForm">
+        <label>Название:
+            <input type="text" id="name" placeholder="Название" required />
+        </label>
+        <label>Slug:
+            <input type="text" id="slug" placeholder="Slug" required />
+        </label>
+        <button type="submit">Создать</button>
+        <p id="error" class="error"></p>
+    </form>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    });
+
+    document.getElementById('createStatusForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const name = document.getElementById('name').value.trim();
+        const slug = document.getElementById('slug').value.trim();
+
+        if (!name || !slug) {
+            document.getElementById('error').innerText = 'Название и slug обязательны';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/eventStatuses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ name, slug })
+            });
+
+            if (response.ok) {
+                alert('Статус успешно создан!');
+                window.location.href = 'statuses.html';
+            } else {
+                const errorData = await response.json();
+                document.getElementById('error').innerText = errorData.detail || 'Ошибка создания';
+            }
+        } catch (error) {
+            document.getElementById('error').innerText = 'Ошибка сервера';
+        }
+    });
+</script>
+
+</body>
+</html>

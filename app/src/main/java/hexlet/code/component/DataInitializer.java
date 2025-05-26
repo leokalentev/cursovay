@@ -19,7 +19,7 @@ import java.util.Optional;
 @Profile("!test")
 public class DataInitializer {
 
-    private static final String ADMIN_EMAIL = "hexlet@example.com";
+    private static final String ADMIN_EMAIL = "admin@kpfu.ru";
 
     @Bean
     public CommandLineRunner initData(UserRepository userRepository,
@@ -41,7 +41,7 @@ public class DataInitializer {
             user.setEmail(ADMIN_EMAIL);
             user.setPassword(encoder.encode("qwerty"));
             user.setFirstName("Admin");
-            user.setLastName("Hexlet");
+            user.setLastName("KPFU");
             userRepository.save(user);
             System.out.println("Admin user created with email: " + ADMIN_EMAIL);
         } else {

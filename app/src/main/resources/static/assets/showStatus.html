@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Информация о статусе мероприятия</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        nav {
+            background: #333;
+            padding: 1rem;
+        }
+        nav a {
+            color: #fff;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 2rem;
+            background-color: white;
+            margin: 2rem auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Информация о статусе</h2>
+    <p><strong>ID:</strong> <span id="status-id"></span></p>
+    <p><strong>Название:</strong> <span id="status-name"></span></p>
+    <p><strong>Slug:</strong> <span id="status-slug"></span></p>
+    <p><strong>Дата создания:</strong> <span id="status-createdAt"></span></p>
+    <button id="edit-status" style="margin-top: 1rem;">Изменить</button>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusId = urlParams.get('id');
+
+    fetch(`/api/eventStatuses/${statusId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Ошибка загрузки статуса');
+        return response.json();
+    })
+    .then(status => {
+        document.getElementById('status-id').textContent = status.id;
+        document.getElementById('status-name').textContent = status.name || '—';
+        document.getElementById('status-slug').textContent = status.slug || '—';
+        document.getElementById('status-createdAt').textContent = status.createdAt || '—';
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Ошибка загрузки статуса');
+    });
+
+    document.getElementById('edit-status').addEventListener('click', () => {
+        window.location.href = `updateStatus.html?id=${statusId}`;
+    });
+</script>
+</body>
+</html>

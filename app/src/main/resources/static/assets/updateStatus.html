@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать статус</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        .container {
+          padding: 2rem;
+          background: white;
+          margin: 2rem auto;
+          width: 400px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label { display: block; margin-top: 1rem; }
+        input { width: 100%; padding: 0.5rem; }
+        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Редактировать статус</h2>
+    <form id="update-form">
+        <label>Название:
+            <input type="text" id="name" required>
+        </label>
+        <label>Slug:
+            <input type="text" id="slug" required>
+        </label>
+        <button type="submit">Сохранить</button>
+    </form>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const statusId = params.get('id');
+    let original = {};
+
+    // 1) Загружаем и показываем существующий статус
+    fetch(`/api/eventStatuses/${statusId}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(res => res.json())
+      .then(dto => {
+        original = dto;
+        document.getElementById('name').value = dto.name || '';
+        document.getElementById('slug').value = dto.slug || '';
+      });
+
+    // 2) Обработка сабмита
+    document.getElementById('update-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      // Всегда отправляем обязательные поля
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        slug: document.getElementById('slug').value.trim(),
+      };
+
+      // Дополнительно, если поменялось — можно добавить в DTO
+      // (но не обязательно, т.к. маппер сам применит изменения)
+      if (payload.name !== original.name) {
+        payload.name = payload.name;
+      }
+      if (payload.slug !== original.slug) {
+        payload.slug = payload.slug;
+      }
+
+      try {
+        const res = await fetch(`/api/eventStatuses/${statusId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Ошибка обновления');
+        }
+        alert('Статус успешно обновлён');
+        window.location.href = `showStatus.html?id=${statusId}`;
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    });
+</script>
+
+</body>
+</html>
