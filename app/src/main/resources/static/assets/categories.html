@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Категории мероприятий</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        .container { padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
+        th { background: #f4f4f4; }
+        .error { color: red; }
+        tr.clickable:hover { background-color: #f0f0f0; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h1>Список категорий мероприятий</h1>
+    <div id="error" class="error"></div>
+    <table id="categories-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Дата создания</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button onclick="window.location.href='createCategory.html'" style="display:none;">Создать категорию</button>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    });
+
+    fetch('/api/categories', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(res => {
+        if (!res.ok) {
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+            }
+            throw new Error('Ошибка при загрузке: ' + res.status);
+        }
+        return res.json();
+    })
+    .then(data => {
+      const tbody = document.querySelector('#categories-table tbody');
+      if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3">Категории не найдены</td></tr>';
+          return;
+      }
+      tbody.innerHTML = data.map(cat => `
+          <tr class="clickable" onclick="window.location.href='showCategory.html?id=${cat.id}'">
+              <td>${cat.id}</td>
+              <td>${cat.name}</td>
+              <td>${cat.createdAt || ''}</td>
+          </tr>
+      `).join('');
+      // Показываем кнопку создания категории
+      document.querySelector('button').style.display = 'block';
+    })
+    .catch(err => {
+        document.getElementById('error').innerText = err.message;
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать категорию</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        .container {
+          padding: 2rem;
+          background: white;
+          margin: 2rem auto;
+          width: 400px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label { display: block; margin-top: 1rem; }
+        input { width: 100%; padding: 0.5rem; }
+        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Редактировать категорию</h2>
+    <form id="update-form">
+        <label>Название:
+            <input type="text" id="name" required>
+        </label>
+        <button type="submit">Сохранить</button>
+    </form>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const categoryId = params.get('id');
+    let original = {};
+
+    // 1) Загружаем и показываем существующую категорию
+    fetch(`/api/categories/${categoryId}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(res => res.json())
+      .then(dto => {
+        original = dto;
+        document.getElementById('name').value = dto.name || '';
+      });
+
+    // 2) Обработка сабмита
+    document.getElementById('update-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const nameInput = document.getElementById('name').value.trim();
+
+      // Готовим payload (если название не изменилось, можно ничего не отправлять)
+      const payload = {};
+      if (nameInput !== original.name) {
+        payload.name = nameInput;
+      }
+
+      try {
+        const res = await fetch(`/api/categories/${categoryId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Ошибка обновления категории');
+        }
+        alert('Категория успешно обновлена');
+        window.location.href = `showCategory.html?id=${categoryId}`;
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    });
+</script>
+
+</body>
+</html>

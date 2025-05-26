@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Информация о категории мероприятия</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        nav {
+            background: #333;
+            padding: 1rem;
+        }
+        nav a {
+            color: #fff;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 2rem;
+            background-color: white;
+            margin: 2rem auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="home.html">Мероприятия</a>
+    <a href="statuses.html">Статусы мероприятий</a>
+    <a href="categories.html">Категории мероприятий</a>
+    <a href="#" id="logout">Выйти</a>
+</nav>
+
+<div class="container">
+    <h2>Информация о категории</h2>
+    <p><strong>ID:</strong> <span id="category-id"></span></p>
+    <p><strong>Название:</strong> <span id="category-name"></span></p>
+    <p><strong>Дата создания:</strong> <span id="category-createdAt"></span></p>
+    <button id="edit-category" style="margin-top: 1rem;">Изменить</button>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('id');
+
+    fetch(`/api/categories/${categoryId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Ошибка загрузки категории');
+        return response.json();
+    })
+    .then(category => {
+        document.getElementById('category-id').textContent = category.id;
+        document.getElementById('category-name').textContent = category.name || '—';
+        document.getElementById('category-createdAt').textContent = category.createdAt || '—';
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Ошибка загрузки категории');
+    });
+
+    document.getElementById('edit-category').addEventListener('click', () => {
+        window.location.href = `updateCategory.html?id=${categoryId}`;
+    });
+</script>
+</body>
+</html>

@@ -67,7 +67,7 @@ public class CategoryController {
         var category = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-        if (!dto.getName().isPresent() || dto.getName().get().isBlank()) {
+        if (dto.getName().isPresent() && dto.getName().get().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле name обязательно и не может быть пустым");
         }
         mapper.update(dto, category);
