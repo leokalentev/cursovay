@@ -4,16 +4,77 @@
     <meta charset="UTF-8" />
     <title>Главная — Мероприятия</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         nav { background: #333; padding: 1rem; }
         nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
         nav a:hover { text-decoration: underline; }
         .container { padding: 2rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
-        th { background: #f4f4f4; }
         .error { color: red; }
-        .create-btn { margin-top: 1rem; padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        .create-btn {
+          margin-bottom: 1.5rem;
+          padding: 10px 20px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background-color 0.3s ease;
+        }
+        .create-btn:hover { background-color: #45a049; }
+
+        /* Сетка карточек */
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .card {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .card h2 {
+          margin: 0 0 0.5rem;
+          font-size: 1.25rem;
+          color: #333;
+        }
+        .card p {
+          flex-grow: 1;
+          margin: 0 0 1rem;
+          color: #555;
+        }
+        .card .btn-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.card button {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.card .view-btn {
+  background-color: #007bff;
+  color: white;
+}
+.card .view-btn:hover {
+  background-color: #0056b3;
+}
+.card .edit-btn {
+  background-color: #6c757d; /* серый */
+  color: white;
+}
+.card .edit-btn:hover {
+  background-color: #5a6268;
+}
+
     </style>
 </head>
 <body>
@@ -28,31 +89,23 @@
 <div class="container">
     <h1>Список мероприятий</h1>
     <div id="error" class="error"></div>
-    <table id="events-table">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Название</th>
-            <th>Описание</th>
-            <th>Статус</th>
-            <th>Дата проведения</th>
-            <th>Создано</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-    <button id="create-btn" class="create-btn" style="display:none;">Создать мероприятие</button>
+    <button id="create-btn" class="create-btn">Создать мероприятие</button>
+    <div class="cards" id="cards-container">
+        <!-- сюда вставятся карточки -->
+    </div>
 </div>
 
 <script>
     const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'login.html';
-    }
+    if (!token) window.location.href = 'login.html';
 
     document.getElementById('logout').addEventListener('click', () => {
       localStorage.removeItem('token');
       window.location.href = 'login.html';
+    });
+
+    document.getElementById('create-btn').addEventListener('click', () => {
+      window.location.href = 'createEvent.html';
     });
 
     fetch('/api/events', {
@@ -68,31 +121,29 @@
       }
       return res.json();
     })
-    .then(data => {
-      const tbody = document.querySelector('#events-table tbody');
-      const createBtn = document.getElementById('create-btn');
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">Мероприятий не найдено</td></tr>';
-        createBtn.style.display = 'block';
-        createBtn.addEventListener('click', () => {
-          // Исправленный путь
-          window.location.href = '/assets/createEvent.html';
-        });
+    .then(events => {
+      const container = document.getElementById('cards-container');
+      if (events.length === 0) {
+        container.innerHTML = '<p>Мероприятий не найдено.</p>';
         return;
       }
-      tbody.innerHTML = data.map(e => `
-            <tr onclick="window.location.href='showEvent.html?id=${e.id}'" style="cursor:pointer;">
-                <td>${e.id}</td>
-                <td>${e.title}</td>
-                <td>${e.description || ''}</td>
-                <td>${e.status}</td>
-                <td>${e.eventDate || ''}</td>
-                <td>${e.createdAt}</td>
-            </tr>
+      container.innerHTML = events.map(e => `
+        <div class="card">
+          <h2>${e.title}</h2>
+          <p>${e.description || 'Описание отсутствует'}</p>
+          <div class="btn-group">
+            <button class="view-btn" onclick="window.location.href='showEvent.html?id=${e.id}'">
+              Просмотр
+            </button>
+            <button class="edit-btn" onclick="window.location.href='updateEvent.html?id=${e.id}'">
+              Изменить
+            </button>
+          </div>
+        </div>
       `).join('');
     })
     .catch(err => {
-      document.getElementById('error').innerText = err.message;
+      document.getElementById('error').textContent = err.message;
     });
 </script>
 

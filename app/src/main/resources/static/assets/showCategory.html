@@ -30,6 +30,32 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .btn-group {
+            margin-top: 1rem;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+        }
+        #edit-category {
+            background-color: #007bff;
+            color: white;
+        }
+        #delete-category {
+            background-color: #dc3545;
+            color: white;
+        }
+        #delete-category:hover {
+            background-color: #b02a37;
+        }
+        #edit-category:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -46,7 +72,10 @@
     <p><strong>ID:</strong> <span id="category-id"></span></p>
     <p><strong>Название:</strong> <span id="category-name"></span></p>
     <p><strong>Дата создания:</strong> <span id="category-createdAt"></span></p>
-    <button id="edit-category" style="margin-top: 1rem;">Изменить</button>
+    <div class="btn-group">
+        <button id="edit-category">Изменить</button>
+        <button id="delete-category">Удалить</button>
+    </div>
 </div>
 
 <script>
@@ -82,6 +111,28 @@
 
     document.getElementById('edit-category').addEventListener('click', () => {
         window.location.href = `updateCategory.html?id=${categoryId}`;
+    });
+
+    document.getElementById('delete-category').addEventListener('click', async () => {
+        if (!confirm('Вы действительно хотите удалить эту категорию?')) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/categories/${categoryId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 204) {
+                alert('Категория успешно удалена');
+                window.location.href = 'categories.html';
+            } else {
+                const err = await res.json();
+                throw new Error(err.detail || 'Ошибка удаления категории');
+            }
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+        }
     });
 </script>
 </body>

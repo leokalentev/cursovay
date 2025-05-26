@@ -30,6 +30,32 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .btn-group {
+            margin-top: 1rem;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+        }
+        #edit-event {
+            background-color: #007bff;
+            color: white;
+        }
+        #delete-event {
+            background-color: #dc3545;
+            color: white;
+        }
+        #delete-event:hover {
+            background-color: #b02a37;
+        }
+        #edit-event:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -51,94 +77,112 @@
     <p><strong>Категории:</strong> <span id="event-categories"></span></p>
     <p><strong>Исполнитель:</strong> <span id="event-assignee"></span></p>
     <p><strong>Создано:</strong> <span id="event-createdAt"></span></p>
-    <button id="edit-event" style="margin-top: 1rem;">Изменить</button>
+
+    <div class="btn-group">
+        <button id="edit-event">Изменить</button>
+        <button id="delete-event">Удалить</button>
+    </div>
 </div>
 
 <script>
     const token = localStorage.getItem("token");
-if (!token) {
-  window.location.href = "login.html";
-}
-
-document.getElementById("logout").addEventListener("click", () => {
-  localStorage.removeItem("token");
-  window.location.href = "login.html";
-});
-
-const urlParams = new URLSearchParams(window.location.search);
-const eventId = urlParams.get("id");
-
-fetch(`/api/events/${eventId}`, {
-  headers: { Authorization: "Bearer " + token },
-})
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error("Ошибка при загрузке мероприятия");
-    }
-    return response.json();
-  })
-  .then(async (event) => {
-    console.log("Ответ сервера:", event);
-
-    document.getElementById("event-id").textContent = event.id;
-    document.getElementById("event-title").textContent = event.title || "—";
-    document.getElementById("event-description").textContent =
-      event.description || "—";
-    document.getElementById("event-status").textContent = event.status || "—";
-    document.getElementById("event-date").textContent = event.eventDate || "—";
-    document.getElementById("event-createdAt").textContent =
-      event.createdAt || "—";
-
-    // Загрузка категорий по их ID
-    const categoriesElement = document.getElementById("event-categories");
-    if (Array.isArray(event.category_ids) && event.category_ids.length > 0) {
-      try {
-        const categoryPromises = event.category_ids.map((id) =>
-          fetch(`/api/categories/${id}`, {
-            headers: { Authorization: "Bearer " + token },
-          }).then((res) => (res.ok ? res.json() : null))
-        );
-        const categories = await Promise.all(categoryPromises);
-        const categoryNames = categories
-          .filter((cat) => cat) // фильтруем успешные
-          .map((cat) => cat.name);
-        categoriesElement.textContent =
-          categoryNames.length > 0 ? categoryNames.join(", ") : "—";
-      } catch (err) {
-        console.error("Ошибка загрузки категорий:", err);
-        categoriesElement.textContent = "Ошибка";
-      }
-    } else {
-      categoriesElement.textContent = "—";
+    if (!token) {
+        window.location.href = "login.html";
     }
 
-    // Загрузка пользователя по ID
-    const assigneeElement = document.getElementById("event-assignee");
-    if (event.assignee_id) {
-      try {
-        const res = await fetch(`/api/users/${event.assignee_id}`, {
-          headers: { Authorization: "Bearer " + token },
-        });
-        if (res.ok) {
-          const user = await res.json();
-          assigneeElement.textContent = user.email || "—";
-        } else {
-          assigneeElement.textContent = "—";
+    document.getElementById("logout").addEventListener("click", () => {
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get("id");
+
+    fetch(`/api/events/${eventId}`, {
+        headers: { Authorization: "Bearer " + token },
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error("Ошибка при загрузке мероприятия");
         }
-      } catch (err) {
-        console.error("Ошибка загрузки пользователя:", err);
-        assigneeElement.textContent = "Ошибка";
-      }
-    } else {
-      assigneeElement.textContent = "—";
-    }
-  })
-  .catch((err) => {
-    console.error("Ошибка:", err);
-    alert("Не удалось загрузить информацию о мероприятии");
-  })
+        return response.json();
+    })
+    .then(async (event) => {
+        document.getElementById("event-id").textContent = event.id;
+        document.getElementById("event-title").textContent = event.title || "—";
+        document.getElementById("event-description").textContent = event.description || "—";
+        document.getElementById("event-status").textContent = event.status || "—";
+        document.getElementById("event-date").textContent = event.eventDate || "—";
+        document.getElementById("event-createdAt").textContent = event.createdAt || "—";
+
+        const categoriesElement = document.getElementById("event-categories");
+        if (Array.isArray(event.category_ids) && event.category_ids.length > 0) {
+            try {
+                const categoryPromises = event.category_ids.map((id) =>
+                    fetch(`/api/categories/${id}`, {
+                        headers: { Authorization: "Bearer " + token },
+                    }).then((res) => (res.ok ? res.json() : null))
+                );
+                const categories = await Promise.all(categoryPromises);
+                const categoryNames = categories.filter((cat) => cat).map((cat) => cat.name);
+                categoriesElement.textContent = categoryNames.length > 0 ? categoryNames.join(", ") : "—";
+            } catch (err) {
+                console.error("Ошибка загрузки категорий:", err);
+                categoriesElement.textContent = "Ошибка";
+            }
+        } else {
+            categoriesElement.textContent = "—";
+        }
+
+        const assigneeElement = document.getElementById("event-assignee");
+        if (event.assignee_id) {
+            try {
+                const res = await fetch(`/api/users/${event.assignee_id}`, {
+                    headers: { Authorization: "Bearer " + token },
+                });
+                if (res.ok) {
+                    const user = await res.json();
+                    assigneeElement.textContent = user.email || "—";
+                } else {
+                    assigneeElement.textContent = "—";
+                }
+            } catch (err) {
+                console.error("Ошибка загрузки пользователя:", err);
+                assigneeElement.textContent = "Ошибка";
+            }
+        } else {
+            assigneeElement.textContent = "—";
+        }
+    })
+    .catch((err) => {
+        console.error("Ошибка:", err);
+        alert("Не удалось загрузить информацию о мероприятии");
+    });
+
     document.getElementById('edit-event').addEventListener('click', () => {
         window.location.href = `updateEvent.html?id=${eventId}`;
+    });
+
+    document.getElementById('delete-event').addEventListener('click', async () => {
+        if (!confirm('Вы действительно хотите удалить это мероприятие?')) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/events/${eventId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 204) {
+                alert('Мероприятие успешно удалено');
+                window.location.href = 'home.html';
+            } else {
+                const err = await res.json();
+                throw new Error(err.detail || 'Ошибка удаления мероприятия');
+            }
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+        }
     });
 </script>
 </body>

@@ -14,6 +14,22 @@
         th { background: #f4f4f4; }
         .error { color: red; }
         tr.clickable:hover { background-color: #f0f0f0; cursor: pointer; }
+        /* Кнопка "Создать" в стиле кнопки "Изменить" */
+        .create-btn {
+            margin-top: 1rem;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+            display: none;
+        }
+        .create-btn:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -38,7 +54,7 @@
         </thead>
         <tbody></tbody>
     </table>
-    <button onclick="window.location.href='createCategory.html'" style="display:none;">Создать категорию</button>
+    <button id="create-btn" class="create-btn" onclick="window.location.href='createCategory.html'">Создать категорию</button>
 </div>
 
 <script>
@@ -67,19 +83,19 @@
     })
     .then(data => {
       const tbody = document.querySelector('#categories-table tbody');
+      const createBtn = document.getElementById('create-btn');
       if (data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="3">Категории не найдены</td></tr>';
-          return;
+      } else {
+          tbody.innerHTML = data.map(cat => `
+              <tr class="clickable" onclick="window.location.href='showCategory.html?id=${cat.id}'">
+                  <td>${cat.id}</td>
+                  <td>${cat.name}</td>
+                  <td>${cat.createdAt || ''}</td>
+              </tr>
+          `).join('');
       }
-      tbody.innerHTML = data.map(cat => `
-          <tr class="clickable" onclick="window.location.href='showCategory.html?id=${cat.id}'">
-              <td>${cat.id}</td>
-              <td>${cat.name}</td>
-              <td>${cat.createdAt || ''}</td>
-          </tr>
-      `).join('');
-      // Показываем кнопку создания категории
-      document.querySelector('button').style.display = 'block';
+      createBtn.style.display = 'inline-block';
     })
     .catch(err => {
         document.getElementById('error').innerText = err.message;

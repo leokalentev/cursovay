@@ -13,6 +13,22 @@
     th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
     th { background: #f4f4f4; }
     .error { color: red; }
+    /* Кнопка "Создать статус" в стиле кнопки "Изменить" */
+    .create-btn {
+      margin-top: 1rem;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
+    .create-btn:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
@@ -38,7 +54,7 @@
     </thead>
     <tbody></tbody>
   </table>
-   <button onclick="window.location.href='createStatus.html'">Создать статус</button>
+  <button class="create-btn" onclick="window.location.href='createStatus.html'">Создать статус</button>
 </div>
 
 <script>
@@ -79,7 +95,7 @@
             <td>${status.createdAt || ''}</td>
         </tr>
     `).join('');
-})
+  })
   .catch(err => {
       document.getElementById('error').innerText = err.message;
   });

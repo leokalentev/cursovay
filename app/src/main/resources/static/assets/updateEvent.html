@@ -158,7 +158,7 @@
       updatedEvent.assignee_id = parseInt(assigneeId);
     }
 
-    try {
+        try {
       const res = await fetch(`/api/events/${eventId}`, {
         method: 'PUT',
         headers: {
@@ -168,8 +168,12 @@
         body: JSON.stringify(updatedEvent)
       });
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
+        let errDetail = 'Ошибка обновления';
+        try {
+          const errData = await res.json();
+          errDetail = errData.detail || errDetail;
+        } catch (_) {}
+        throw new Error(errDetail);
       }
       alert('Мероприятие обновлено');
       window.location.href = `showEvent.html?id=${eventId}`;

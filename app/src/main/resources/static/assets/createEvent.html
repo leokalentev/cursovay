@@ -171,6 +171,7 @@
             if (response.ok) {
                 alert('Мероприятие успешно создано!');
                 document.getElementById('createEventForm').reset();
+                window.location.href = 'home.html';
             } else {
                 const errorData = await response.json();
                 document.getElementById('error').innerText = errorData.message || 'Ошибка создания';

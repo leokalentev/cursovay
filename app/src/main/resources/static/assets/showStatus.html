@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Информация о статусе мероприятия</title>
     <style>
         body {
@@ -30,10 +30,35 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .btn-group {
+            margin-top: 1rem;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+        }
+        #edit-status {
+            background-color: #007bff;
+            color: white;
+        }
+        #delete-status {
+            background-color: #dc3545;
+            color: white;
+        }
+        #delete-status:hover {
+            background-color: #b02a37;
+        }
+        #edit-status:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
-
 <nav>
     <a href="home.html">Мероприятия</a>
     <a href="statuses.html">Статусы мероприятий</a>
@@ -47,7 +72,11 @@
     <p><strong>Название:</strong> <span id="status-name"></span></p>
     <p><strong>Slug:</strong> <span id="status-slug"></span></p>
     <p><strong>Дата создания:</strong> <span id="status-createdAt"></span></p>
-    <button id="edit-status" style="margin-top: 1rem;">Изменить</button>
+
+    <div class="btn-group">
+        <button id="edit-status">Изменить</button>
+        <button id="delete-status">Удалить</button>
+    </div>
 </div>
 
 <script>
@@ -84,6 +113,28 @@
 
     document.getElementById('edit-status').addEventListener('click', () => {
         window.location.href = `updateStatus.html?id=${statusId}`;
+    });
+
+    document.getElementById('delete-status').addEventListener('click', async () => {
+        if (!confirm('Вы действительно хотите удалить этот статус?')) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/eventStatuses/${statusId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 204) {
+                alert('Статус успешно удалён');
+                window.location.href = 'statuses.html';
+            } else {
+                const err = await res.json();
+                throw new Error(err.detail || 'Ошибка удаления статуса');
+            }
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+        }
     });
 </script>
 </body>
