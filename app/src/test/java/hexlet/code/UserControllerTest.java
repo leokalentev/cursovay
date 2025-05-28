@@ -49,7 +49,8 @@ class UserControllerTest {
     private JWTUtils jwtUtils;
 
     private String createUserAndGetToken() {
-        String email = faker.internet().emailAddress();
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        String email = emailPrefix + "@kpfu.ru";
         String rawPassword = faker.internet().password(3, 12);
         User user = new User();
         user.setEmail(email);
@@ -59,6 +60,7 @@ class UserControllerTest {
         userRepository.save(user);
         return jwtUtils.generateToken(email);
     }
+
 
     @Test
     public void testWelcomePage() throws Exception {
@@ -85,8 +87,11 @@ class UserControllerTest {
     public void testShow() throws Exception {
         String token = createUserAndGetToken();
 
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        String email = emailPrefix + "@kpfu.ru";
+
         var user = new User();
-        user.setEmail(faker.internet().emailAddress());
+        user.setEmail(email);
         user.setFirstName(faker.name().firstName());
         user.setLastName(faker.name().lastName());
         user.setPassword(passwordEncoder.encode("password"));
@@ -111,7 +116,10 @@ class UserControllerTest {
     public void testCreate() throws Exception {
         var firstName = faker.name().firstName();
         var lastName = faker.name().lastName();
-        var email = faker.internet().emailAddress();
+
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        var email = emailPrefix + "@kpfu.ru";
+
         var password = faker.internet().password(3, 12);
 
         UserCreateDTO userCreateDTO = new UserCreateDTO();
@@ -138,12 +146,16 @@ class UserControllerTest {
         );
     }
 
+
     @Test
     public void testUpdateUser() throws Exception {
         String rawPassword = faker.internet().password(3, 12);
 
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        var email = emailPrefix + "@kpfu.ru";
+
         var user = new User();
-        user.setEmail(faker.internet().emailAddress());
+        user.setEmail(email);
         user.setFirstName(faker.name().firstName());
         user.setLastName(faker.name().lastName());
         user.setPassword(passwordEncoder.encode(rawPassword));
@@ -152,11 +164,12 @@ class UserControllerTest {
         String token = jwtUtils.generateToken(user.getEmail());
 
         String newFirstName = faker.name().firstName();
-        String neEmail = faker.internet().emailAddress();
+        String newEmailPrefix = faker.internet().emailAddress().split("@")[0];
+        String newEmail = newEmailPrefix + "@kpfu.ru";
 
         UserUpdateDTO newUser = new UserUpdateDTO();
         newUser.setFirstName(JsonNullable.of(newFirstName));
-        newUser.setEmail(JsonNullable.of(neEmail));
+        newUser.setEmail(JsonNullable.of(newEmail));
         newUser.setPassword(JsonNullable.of(rawPassword));
 
         MvcResult result = mockMvc.perform(put("/api/users/" + user.getId())
@@ -169,18 +182,20 @@ class UserControllerTest {
         String responseBody = result.getResponse().getContentAsString();
         assertThatJson(responseBody).and(
                 a -> a.node("firstName").isEqualTo(newFirstName),
-                a -> a.node("email").isEqualTo(neEmail),
+                a -> a.node("email").isEqualTo(newEmail),
                 a -> a.node("lastName").isEqualTo(user.getLastName())
         );
     }
-
 
     @Test
     public void testDeleteUser() throws Exception {
         String rawPassword = faker.internet().password(3, 12);
 
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        var email = emailPrefix + "@kpfu.ru";
+
         var user = new User();
-        user.setEmail(faker.internet().emailAddress());
+        user.setEmail(email);
         user.setFirstName(faker.name().firstName());
         user.setLastName(faker.name().lastName());
         user.setPassword(passwordEncoder.encode(rawPassword));
@@ -197,7 +212,8 @@ class UserControllerTest {
 
     @Test
     public void testUpdateOtherUserForbidden() throws Exception {
-        String ownerEmail = faker.internet().emailAddress();
+        String ownerEmailPrefix = faker.internet().emailAddress().split("@")[0];
+        String ownerEmail = ownerEmailPrefix + "@kpfu.ru";
         String ownerPassword = faker.internet().password(6, 12);
         User owner = new User();
         owner.setEmail(ownerEmail);
@@ -207,8 +223,11 @@ class UserControllerTest {
         userRepository.save(owner);
         String ownerToken = jwtUtils.generateToken(owner.getEmail());
 
+        String targetEmailPrefix = faker.internet().emailAddress().split("@")[0];
+        String targetEmail = targetEmailPrefix + "@kpfu.ru";
+
         User target = new User();
-        target.setEmail(faker.internet().emailAddress());
+        target.setEmail(targetEmail);
         target.setFirstName("Target");
         target.setLastName("User");
         target.setPassword(passwordEncoder.encode(faker.internet().password(6, 12)));
@@ -225,7 +244,8 @@ class UserControllerTest {
 
     @Test
     public void testDeleteOtherUserForbidden() throws Exception {
-        String hackerEmail = faker.internet().emailAddress();
+        String hackerEmailPrefix = faker.internet().emailAddress().split("@")[0];
+        String hackerEmail = hackerEmailPrefix + "@kpfu.ru";
         String hackerPassword = faker.internet().password(6, 12);
         User hacker = new User();
         hacker.setEmail(hackerEmail);
@@ -235,8 +255,11 @@ class UserControllerTest {
         userRepository.save(hacker);
         String hackerToken = jwtUtils.generateToken(hacker.getEmail());
 
+        String victimEmailPrefix = faker.internet().emailAddress().split("@")[0];
+        String victimEmail = victimEmailPrefix + "@kpfu.ru";
+
         User victim = new User();
-        victim.setEmail(faker.internet().emailAddress());
+        victim.setEmail(victimEmail);
         victim.setFirstName("Victim");
         victim.setLastName("User");
         victim.setPassword(passwordEncoder.encode(faker.internet().password(6, 12)));
@@ -246,6 +269,5 @@ class UserControllerTest {
                         .header("Authorization", "Bearer " + hackerToken))
                 .andExpect(status().isForbidden());
     }
-
 }
 

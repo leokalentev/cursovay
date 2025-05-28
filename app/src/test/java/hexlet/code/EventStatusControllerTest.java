@@ -21,7 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
+import net.datafaker.Faker;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -47,6 +47,7 @@ class EventStatusControllerTest {
     @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JWTUtils jwtUtils;
+    @Autowired private Faker faker;
 
     @BeforeEach
     void setup() {
@@ -56,15 +57,14 @@ class EventStatusControllerTest {
     }
 
     private String createUserAndGetToken() {
-        String email = "user-" + UUID.randomUUID() + "@example.com";
-        String password = "password";
-
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        String email = emailPrefix + "@kpfu.ru";
+        String rawPassword = faker.internet().password(3, 12);
         User user = new User();
         user.setEmail(email);
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setPassword(passwordEncoder.encode(password));
-
+        user.setFirstName(faker.name().firstName());
+        user.setLastName(faker.name().lastName());
+        user.setPassword(passwordEncoder.encode(rawPassword));
         userRepository.save(user);
         return jwtUtils.generateToken(email);
     }

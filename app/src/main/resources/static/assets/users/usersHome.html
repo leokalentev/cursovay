@@ -10,84 +10,51 @@
         nav a:hover { text-decoration: underline; }
         .container { padding: 2rem; }
         .error { color: red; margin-bottom: 1rem; }
-        .filters {
-          display: flex;
-          gap: 1rem;
-          flex-wrap: wrap;
-          margin-bottom: 1rem;
-        }
-        .filters > * {
-          padding: 0.5rem;
-          font-size: 1rem;
-        }
-        .create-btn {
-          margin-bottom: 1.5rem;
-          padding: 10px 20px;
-          background-color: #4CAF50;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 1rem;
-          transition: background-color 0.3s ease;
-        }
+        .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .filters > * { padding: 0.5rem; font-size: 1rem; }
+        .create-btn { margin-bottom: 1.5rem; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; }
         .create-btn:hover { background-color: #45a049; }
-        .cards {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
+        .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
         .card {
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
+          position: relative; background: white; border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 1.5rem;
+          display: flex; flex-direction: column; justify-content: space-between;
         }
         .card h2 { margin: 0 0 0.5rem; font-size: 1.25rem; color: #333; }
         .card p { flex-grow: 1; margin: 0 0 1rem; color: #555; }
         .btn-group { display: flex; gap: 0.5rem; }
-        .btn-group button {
-          padding: 8px 12px;
-          font-size: 0.9rem;
-          border: none;
-          border-radius: 5px;
+        .view-btn { background: #007bff; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .view-btn:hover { background: #0056b3; }
+        .edit-btn { background: #28a745; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .edit-btn:hover { background: #218838; }
+        .fav {
+          position: absolute;
+          top: 10px; right: 10px;
+          font-size: 1.5rem;
           cursor: pointer;
-          transition: background-color 0.2s ease;
+          color: #999;
+          transition: color 0.2s;
         }
-        .view-btn { background-color: #007bff; color: white; }
-        .view-btn:hover { background-color: #0056b3; }
-        .edit-btn { background-color: #28a745; color: white; }
-        .edit-btn:hover { background-color: #218838; }
+        .fav.active { color: #e74c3c; }
     </style>
 </head>
 <body>
-
 <nav>
     <a href="usersHome.html">Мероприятия</a>
-    <a href="#" id="logout">Выйти</a>
+    <a href="savedEventUsers.html">Избранное</a>
+    <a href="/assets/login.html" id="logout">Выйти</a>
 </nav>
-
 <div class="container">
     <h1>Список мероприятий</h1>
     <div id="error" class="error"></div>
-
-    <!-- Фильтры -->
-    <div class="filters" id="filters">
+    <div class="filters">
         <input type="text" id="filter-title" placeholder="По названию" />
-        <select id="filter-status">
-            <option value="">Все статусы</option>
-        </select>
-        <select id="filter-category">
-            <option value="">Все категории</option>
-        </select>
+        <select id="filter-status"><option value="">Все статусы</option></select>
+        <select id="filter-category"><option value="">Все категории</option></select>
         <input type="date" id="filter-date" />
         <button id="apply-filters">Применить</button>
         <button id="clear-filters">Сбросить</button>
     </div>
-
     <button id="create-btn" class="create-btn">Создать мероприятие</button>
     <div class="cards" id="cards-container"></div>
 </div>
@@ -96,98 +63,101 @@
     const token = localStorage.getItem('token');
     if (!token) location.href = 'login.html';
 
-    document.getElementById('logout').onclick = () => {
-        localStorage.removeItem('token');
-        location.href = 'login.html';
-    };
+    function getFavs() {
+      return JSON.parse(localStorage.getItem('favourites') || '[]');
+    }
+    function toggleFav(id) {
+      const favs = getFavs();
+      const idx = favs.indexOf(id);
+      if (idx >= 0) favs.splice(idx,1);
+      else favs.push(id);
+      localStorage.setItem('favourites', JSON.stringify(favs));
+    }
 
+    document.getElementById('logout').onclick = () => {
+      localStorage.removeItem('token');
+      location.href = 'login.html';
+    };
     document.getElementById('create-btn').onclick = () => {
-        location.href = 'createEventUsers.html';
+      location.href = 'createEventUsers.html';
     };
 
     let statuses = [], categories = [];
-
     async function loadLookups() {
-        const [statusRes, categoryRes] = await Promise.all([
-            fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } }),
-            fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
-        ]);
-        statuses = await statusRes.json();
-        categories = await categoryRes.json();
+      const [stRes, catRes] = await Promise.all([
+        fetch('/api/eventStatuses', { headers:{'Authorization':'Bearer '+token}}),
+        fetch('/api/categories',      { headers:{'Authorization':'Bearer '+token}})
+      ]);
+      statuses   = await stRes.json();
+      categories = await catRes.json();
 
-        const stSel = document.getElementById('filter-status');
-        statuses.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.slug;
-            opt.textContent = s.name;
-            stSel.appendChild(opt);
-        });
-
-        const catSel = document.getElementById('filter-category');
-        categories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.name;
-            catSel.appendChild(opt);
-        });
+      const stSel = document.getElementById('filter-status');
+      statuses.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.slug; opt.textContent = s.name;
+        stSel.appendChild(opt);
+      });
+      const catSel = document.getElementById('filter-category');
+      categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.name;
+        catSel.appendChild(opt);
+      });
     }
 
     async function loadEvents() {
-        const params = new URLSearchParams();
-        const title = document.getElementById('filter-title').value.trim();
-        const status = document.getElementById('filter-status').value;
-        const category = document.getElementById('filter-category').value;
-        const date = document.getElementById('filter-date').value;
-        if (title) params.set('title', title);
-        if (status) params.set('status', status);
-        if (category) params.set('category_ids', category);
-        if (date) params.set('eventDate', date);
+      const params = new URLSearchParams();
+      const t = document.getElementById('filter-title').value.trim();
+      const s = document.getElementById('filter-status').value;
+      const c = document.getElementById('filter-category').value;
+      const d = document.getElementById('filter-date').value;
+      if (t) params.set('title', t);
+      if (s) params.set('status', s);
+      if (c) params.set('category_ids', c);
+      if (d) params.set('eventDate', d);
 
-        const res = await fetch('/api/events?' + params.toString(), {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
+      const [userRes, eventsRes] = await Promise.all([
+        fetch('/api/users/me',      { headers:{'Authorization':'Bearer '+token}}),
+        fetch(`/api/events?${params}`, { headers:{'Authorization':'Bearer '+token}})
+      ]);
+      if (!userRes.ok) throw new Error('Не удалось получить профиль');
+      if (!eventsRes.ok) throw new Error('Ошибка загрузки мероприятий: '+eventsRes.status);
 
-        if (!res.ok) {
-            document.getElementById('error').textContent = 'Ошибка загрузки: ' + res.status;
-            return;
-        }
-
-        const events = await res.json();
-        renderCards(events);
+      const user   = await userRes.json();
+      const events = await eventsRes.json();
+      renderCards(events, user.id);
     }
 
-    function renderCards(events) {
-        const c = document.getElementById('cards-container');
-        if (!events.length) {
-            c.innerHTML = '<p>Мероприятий не найдено.</p>';
-            return;
-        }
-
-        c.innerHTML = events.map(e => `
-            <div class="card">
-                <h2>${e.title}</h2>
-                <p>${e.description || 'Описание отсутствует'}</p>
-                <div class="btn-group">
-                    <button class="view-btn" onclick="location.href='showEventUsers.html?id=${e.id}'">Просмотр</button>
-                    <button class="edit-btn" onclick="location.href='updateEventUsers.html?id=${e.id}'">Изменить</button>
-                </div>
+    function renderCards(events, currentUserId) {
+      const favs = getFavs();
+      const cont = document.getElementById('cards-container');
+      if (!events.length) {
+        cont.innerHTML = '<p>Мероприятий не найдено.</p>';
+        return;
+      }
+      cont.innerHTML = events.map(e => {
+        const canEdit = e.assignee_id === currentUserId;
+        const heartClass = favs.includes(e.id) ? 'fav active' : 'fav';
+        return `
+          <div class="card">
+            <div class="${heartClass}" onclick="toggleFav(${e.id}); loadEvents();">❤</div>
+            <h2>${e.title}</h2>
+            <p>${e.description||'Описание отсутствует'}</p>
+            <div class="btn-group">
+              <button class="view-btn" onclick="location.href='showEventUsers.html?id=${e.id}'">Просмотр</button>
+              ${canEdit?`<button class="edit-btn" onclick="location.href='updateEventUsers.html?id=${e.id}'">Изменить</button>`:''}
             </div>
-        `).join('');
+          </div>`;
+      }).join('');
     }
 
-    document.getElementById('apply-filters').onclick = () => {
-        loadEvents().catch(e => document.getElementById('error').textContent = e.message);
-    };
-    document.getElementById('clear-filters').onclick = () => {
-        document.getElementById('filter-title').value = '';
-        document.getElementById('filter-status').value = '';
-        document.getElementById('filter-category').value = '';
-        document.getElementById('filter-date').value = '';
-        loadEvents().catch(e => document.getElementById('error').textContent = e.message);
+    document.getElementById('apply-filters').onclick = ()=> loadEvents().catch(e=>document.getElementById('error').textContent=e.message);
+    document.getElementById('clear-filters').onclick = ()=>{
+      ['filter-title','filter-status','filter-category','filter-date'].forEach(id=>document.getElementById(id).value='');
+      loadEvents().catch(e=>document.getElementById('error').textContent=e.message);
     };
 
-    loadLookups().then(loadEvents).catch(e => document.getElementById('error').textContent = e.message);
+    loadLookups().then(loadEvents).catch(e=>document.getElementById('error').textContent=e.message);
 </script>
-
 </body>
 </html>

@@ -61,24 +61,29 @@ public class EventControllerTest {
     }
 
     private String createUserAndGetToken() {
-        String email = faker.internet().emailAddress();
-        String password = faker.internet().password(6, 12);
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        String email = emailPrefix + "@kpfu.ru";
+        String rawPassword = faker.internet().password(3, 12);
         User user = new User();
         user.setEmail(email);
         user.setFirstName(faker.name().firstName());
         user.setLastName(faker.name().lastName());
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder.encode(rawPassword));
         userRepository.save(user);
         return jwtUtils.generateToken(email);
     }
 
     private User createAndSaveUser() {
-        User u = new User();
-        u.setEmail(faker.internet().emailAddress());
-        u.setFirstName(faker.name().firstName());
-        u.setLastName(faker.name().lastName());
-        u.setPassword(passwordEncoder.encode(faker.internet().password(3, 12)));
-        return userRepository.save(u);
+        String emailPrefix = faker.internet().emailAddress().split("@")[0];
+        String email = emailPrefix + "@kpfu.ru";
+        String rawPassword = faker.internet().password(3, 12);
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(faker.name().firstName());
+        user.setLastName(faker.name().lastName());
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        userRepository.save(user);
+        return user;
     }
 
     private EventStatus createAndSaveStatus() {

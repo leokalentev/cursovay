@@ -79,13 +79,17 @@ public class UserController {
     @PostMapping(path = "/users")
     @ResponseStatus(HttpStatus.CREATED)
     public UserDTO create(@RequestBody @Valid UserCreateDTO userCreateDTO) {
+        String email = userCreateDTO.getEmail();
+        if (!isValidEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email не принадлежит kpfu.ru");
+        }
+
         var user = userMapper.map(userCreateDTO);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         userRepository.save(user);
 
-        var userDTO = userMapper.map(user);
-        return userDTO;
+        return userMapper.map(user);
     }
 
     @PutMapping("/users/{id}")
@@ -100,19 +104,21 @@ public class UserController {
         if (!userUpdateDTO.getEmail().isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле email обязательно");
         }
-        if (!isValidEmail(userUpdateDTO.getEmail().get())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректный email");
+
+        String email = userUpdateDTO.getEmail().get();
+        if (!isValidEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email не принадлежит kpfu.ru");
         }
 
         if (!userUpdateDTO.getPassword().isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле password обязательно");
         }
+
         if (userUpdateDTO.getPassword().get().length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Пароль должен содержать минимум 3 символа");
         }
 
         userMapper.update(userUpdateDTO, user);
-
         user.setPassword(passwordEncoder.encode(userUpdateDTO.getPassword().get()));
 
         userRepository.save(user);
@@ -120,7 +126,7 @@ public class UserController {
     }
 
     private boolean isValidEmail(String email) {
-        return email != null && email.matches("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,}$");
+        return email != null && email.matches("^[\\w-.]+@kpfu\\.ru$");
     }
 
     @DeleteMapping(path = "/users/{id}")

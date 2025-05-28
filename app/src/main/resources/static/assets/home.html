@@ -38,6 +38,7 @@
           gap: 1.5rem;
         }
         .card {
+          position: relative;
           background: white;
           border-radius: 8px;
           box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -61,6 +62,17 @@
         .view-btn:hover { background-color: #0056b3; }
         .edit-btn { background-color: #6c757d; color: white; }
         .edit-btn:hover { background-color: #5a6268; }
+
+        /* Значок «сердечка» */
+        .fav {
+          position: absolute;
+          top: 10px; right: 10px;
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: #ccc;
+          transition: color 0.2s;
+        }
+        .fav.active { color: #e74c3c; }
     </style>
 </head>
 <body>
@@ -69,6 +81,7 @@
     <a href="home.html">Мероприятия</a>
     <a href="statuses.html">Статусы мероприятий</a>
     <a href="categories.html">Категории мероприятий</a>
+    <a href="savedEvent.html">Избранное</a>
     <a href="#" id="logout">Выйти</a>
 </nav>
 
@@ -98,23 +111,33 @@
     const token = localStorage.getItem('token');
     if (!token) location.href = 'login.html';
 
-    // Уходим сессии
+    // Локальное хранилище избранного
+    function getFavs() {
+      return JSON.parse(localStorage.getItem('favourites') || '[]');
+    }
+    function toggleFav(id) {
+      const favs = getFavs();
+      const idx = favs.indexOf(id);
+      if (idx >= 0) favs.splice(idx,1);
+      else favs.push(id);
+      localStorage.setItem('favourites', JSON.stringify(favs));
+    }
+
+    // Логаут и создание
     document.getElementById('logout').onclick = () => {
       localStorage.removeItem('token');
       location.href = 'login.html';
     };
-
     document.getElementById('create-btn').onclick = () => {
       location.href = 'createEvent.html';
     };
 
-    // Загрузка статусов и категорий для фильтров
+    // Загрузка справочников
     let statuses = [], categories = [];
-
     async function loadLookups() {
       const [stRes, catRes] = await Promise.all([
-        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token }}),
-        fetch('/api/categories',      { headers: { 'Authorization': 'Bearer ' + token }})
+        fetch('/api/eventStatuses', { headers:{'Authorization':'Bearer '+token}}),
+        fetch('/api/categories',      { headers:{'Authorization':'Bearer '+token}})
       ]);
       statuses   = await stRes.json();
       categories = await catRes.json();
@@ -122,21 +145,18 @@
       const stSel = document.getElementById('filter-status');
       statuses.forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.slug;
-        opt.textContent = s.name;
+        opt.value = s.slug; opt.textContent = s.name;
         stSel.appendChild(opt);
       });
-
       const catSel = document.getElementById('filter-category');
       categories.forEach(c => {
         const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.name;
+        opt.value = c.id; opt.textContent = c.name;
         catSel.appendChild(opt);
       });
     }
 
-    // Основная функция загрузки и рендера событий
+    // Загрузка и рендер мероприятий с фильтрами
     async function loadEvents() {
       const params = new URLSearchParams();
       const t = document.getElementById('filter-title').value.trim();
@@ -148,61 +168,51 @@
       if (c) params.set('category_ids', c);
       if (d) params.set('eventDate', d);
 
-      // Профиль нужен, чтобы знать currentUserId
       const [userRes, eventsRes] = await Promise.all([
-        fetch('/api/users/me',      { headers: { 'Authorization': 'Bearer ' + token }}),
-        fetch(`/api/events?${params}`, { headers: { 'Authorization': 'Bearer ' + token }})
+        fetch('/api/users/me',      { headers:{'Authorization':'Bearer '+token}}),
+        fetch(`/api/events?${params}`, { headers:{'Authorization':'Bearer '+token}})
       ]);
-
       if (!userRes.ok) throw new Error('Не удалось получить профиль');
-      if (!eventsRes.ok) throw new Error('Ошибка при загрузке мероприятий: ' + eventsRes.status);
+      if (!eventsRes.ok) throw new Error('Ошибка загрузки мероприятий: '+eventsRes.status);
 
       const user   = await userRes.json();
       const events = await eventsRes.json();
       renderCards(events, user.id);
     }
 
-    // Рендер карточек с учётом того, кто их создал
+    // Рендер карточек
     function renderCards(events, currentUserId) {
-      const container = document.getElementById('cards-container');
+      const favs = getFavs();
+      const cont = document.getElementById('cards-container');
       if (!events.length) {
-        container.innerHTML = '<p>Мероприятий не найдено.</p>';
+        cont.innerHTML = '<p>Мероприятий не найдено.</p>';
         return;
       }
-      container.innerHTML = events.map(e => {
+      cont.innerHTML = events.map(e => {
         const canEdit = e.assignee_id === currentUserId;
+        const heartClass = favs.includes(e.id) ? 'fav active' : 'fav';
         return `
           <div class="card">
+            <div class="${heartClass}" onclick="toggleFav(${e.id}); loadEvents();">❤</div>
             <h2>${e.title}</h2>
-            <p>${e.description || 'Описание отсутствует'}</p>
+            <p>${e.description||'Описание отсутствует'}</p>
             <div class="btn-group">
-              <button class="view-btn" onclick="location.href='showEvent.html?id=${e.id}'">
-                Просмотр
-              </button>
-              ${canEdit ? `
-              <button class="edit-btn" onclick="location.href='updateEvent.html?id=${e.id}'">
-                Изменить
-              </button>` : ''}
+              <button class="view-btn" onclick="location.href='showEvent.html?id=${e.id}'">Просмотр</button>
+              ${canEdit?`<button class="edit-btn" onclick="location.href='updateEvent.html?id=${e.id}'">Изменить</button>`:''}
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
-    // Привязываем кнопки фильтрации
-    document.getElementById('apply-filters').onclick = () => {
-      loadEvents().catch(e => document.getElementById('error').textContent = e.message);
-    };
-    document.getElementById('clear-filters').onclick = () => {
-      ['filter-title','filter-status','filter-category','filter-date']
-        .forEach(id => document.getElementById(id).value = '');
-      loadEvents().catch(e => document.getElementById('error').textContent = e.message);
+    // Фильтры
+    document.getElementById('apply-filters').onclick = ()=> loadEvents().catch(e=>document.getElementById('error').textContent=e.message);
+    document.getElementById('clear-filters').onclick = ()=>{
+      ['filter-title','filter-status','filter-category','filter-date'].forEach(id=>document.getElementById(id).value='');
+      loadEvents().catch(e=>document.getElementById('error').textContent=e.message);
     };
 
     // Инициализация
-    loadLookups()
-      .then(loadEvents)
-      .catch(e => document.getElementById('error').textContent = e.message);
+    loadLookups().then(loadEvents).catch(e=>document.getElementById('error').textContent=e.message);
 </script>
 
 </body>
