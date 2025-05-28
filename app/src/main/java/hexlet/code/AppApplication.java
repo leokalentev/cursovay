@@ -21,6 +21,11 @@ public class AppApplication {
         return "Welcome to Spring!";
     }
 
+    @GetMapping("/")
+    public String redirectToRegistration() {
+        return "redirect:/assets/registration.html";
+    }
+
     @Bean
     public Faker getFaker() {
         return new Faker();
