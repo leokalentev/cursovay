@@ -3,61 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <title>Создать мероприятие</title>
+    <link rel="stylesheet" href="../style.css">
     <style>
-        body {
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-            margin: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-
-        nav {
-            background: #2c3e50;
-            padding: 1.25rem 2rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            color: white;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            position: relative;
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: #3498db;
-        }
-
-        #logout {
-            background: none;
-            border: none;
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: background 0.3s ease;
-        }
-
-        #logout:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
         .container {
             background: white;
             border-radius: 15px;
@@ -208,22 +155,11 @@
             75% { transform: translateX(-5px); }
             100% { transform: translateX(0); }
         }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            .nav-links {
-                display: none;
-            }
-        }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="nav-logo">Создание мероприятия</div>
     <div class="nav-links">
         <a href="usersHome.html">Мероприятия</a>
         <a href="savedEventUsers.html">Избранное</a>
@@ -285,7 +221,6 @@
     });
 
     let me = null;
-    // Получаем текущего пользователя
     fetch('/api/users/me', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
@@ -306,7 +241,6 @@
       document.getElementById('error').textContent = err.message;
     });
 
-    // Статусы
     fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
       .then(r => r.json())
       .then(list => {
@@ -319,7 +253,6 @@
         });
       });
 
-    // Категории
     fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
       .then(r => r.json())
       .then(list => {
@@ -332,7 +265,6 @@
         });
       });
 
-    // Отправка
     document.getElementById('createEventForm')
       .addEventListener('submit', async e => {
         e.preventDefault();

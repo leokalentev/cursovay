@@ -3,7 +3,154 @@
 <head>
   <meta charset="UTF-8">
   <title>Регистрация</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+    }
+
+    .container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 30px;
+        width: 100%;
+        max-width: 400px;
+        transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+        transform: translateY(-5px);
+    }
+
+    h2 {
+        color: #2c3e50;
+        margin-bottom: 25px;
+        font-size: 24px;
+        text-align: center;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    input:focus {
+        border-color: #3B71CA;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
+    }
+
+    label {
+        position: absolute;
+        top: 12px;
+        left: 15px;
+        color: #999;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        background: white;
+        padding: 0 4px;
+    }
+
+    input:not(:placeholder-shown) + label,
+    input:focus + label {
+        top: -8px;
+        left: 12px;
+        font-size: 12px;
+        color: #3B71CA;
+        background: white;
+    }
+
+    button {
+        background: #3B71CA;
+        border: none;
+        color: white;
+        padding: 14px;
+        border-radius: 8px;
+        width: 100%;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    button:hover {
+        background: #2c5c99;
+    }
+
+    button:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .error {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 10px;
+        display: none;
+        animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+        100% { transform: translateX(0); }
+    }
+
+    .login-link {
+        text-align: center;
+        margin-top: 20px;
+        color: #666;
+    }
+
+    .login-link a {
+        color: #3B71CA;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+        .container {
+            padding: 20px;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            font-size: 16px;
+        }
+
+        label {
+            font-size: 14px;
+            top: 14px;
+        }
+    }
+  </style>
 </head>
 <body>
 <div class="container">
