@@ -5,80 +5,175 @@
     <title>Информация о мероприятии</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
+
         nav {
-            background: #333;
-            padding: 1rem;
-        }
-        nav a {
-            color: #fff;
-            margin-right: 1rem;
-            text-decoration: none;
-        }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        .container {
-            padding: 2rem;
-            background-color: white;
-            margin: 2rem auto;
-            width: 400px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .btn-group {
-            margin-top: 1rem;
+            background: #2c3e50;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
         }
-        button {
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            cursor: pointer;
-            border-radius: 5px;
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #3498db;
+        }
+
+        #logout {
+            background: none;
             border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.3s ease;
         }
+
+        #logout:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            margin: 2rem auto;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            position: relative;
+        }
+
+        h2::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: #3B71CA;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .event-info {
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .event-info p {
+            margin: 0.5rem 0;
+            color: #555;
+        }
+
+        .event-info strong {
+            color: #2c3e50;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         #edit-event {
-            background-color: #007bff;
+            background: #3498db;
             color: white;
         }
-        #delete-event {
-            background-color: #dc3545;
-            color: white;
-        }
-        #delete-event:hover {
-            background-color: #b02a37;
-        }
+
         #edit-event:hover {
-            background-color: #0056b3;
+            background: #2980b9;
+        }
+
+        #delete-event {
+            background: #e74c3c;
+            color: white;
+        }
+
+        #delete-event:hover {
+            background: #c0392b;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .event-info strong {
+                display: block;
+                margin-bottom: 0.3rem;
+            }
         }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="home.html">Мероприятия</a>
-    <a href="statuses.html">Статусы мероприятий</a>
-    <a href="categories.html">Категории мероприятий</a>
-    <a href="savedEvent.html">Избранное</a>
-    <a href="#" id="logout">Выйти</a>
+    <div class="nav-links">
+        <a href="home.html">Мероприятия</a>
+        <a href="statuses.html">Статусы</a>
+        <a href="categories.html">Категории</a>
+        <a href="savedEvent.html">Избранное</a>
+    </div>
+    <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
     <h2>Информация о мероприятии</h2>
-    <p><strong>ID:</strong> <span id="event-id"></span></p>
-    <p><strong>Название:</strong> <span id="event-title"></span></p>
-    <p><strong>Описание:</strong> <span id="event-description"></span></p>
-    <p><strong>Статус:</strong> <span id="event-status"></span></p>
-    <p><strong>Дата проведения:</strong> <span id="event-date"></span></p>
-    <p><strong>Категории:</strong> <span id="event-categories"></span></p>
-    <p><strong>Исполнитель:</strong> <span id="event-assignee"></span></p>
-    <p><strong>Создано:</strong> <span id="event-createdAt"></span></p>
-
+    <div class="event-info">
+        <p><strong>ID:</strong> <span id="event-id"></span></p>
+        <p><strong>Название:</strong> <span id="event-title"></span></p>
+        <p><strong>Описание:</strong> <span id="event-description"></span></p>
+        <p><strong>Статус:</strong> <span id="event-status"></span></p>
+        <p><strong>Дата проведения:</strong> <span id="event-date"></span></p>
+        <p><strong>Категории:</strong> <span id="event-categories"></span></p>
+        <p><strong>Исполнитель:</strong> <span id="event-assignee"></span></p>
+        <p><strong>Создано:</strong> <span id="event-createdAt"></span></p>
+    </div>
     <div class="btn-group">
         <button id="edit-event">Изменить</button>
         <button id="delete-event">Удалить</button>
@@ -87,9 +182,7 @@
 
 <script>
     const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "login.html";
-    }
+    if (!token) window.location.href = "login.html";
 
     document.getElementById("logout").addEventListener("click", () => {
         localStorage.removeItem("token");
@@ -99,16 +192,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get("id");
 
-    fetch(`/api/events/${eventId}`, {
-        headers: { Authorization: "Bearer " + token },
-    })
-    .then((response) => {
-        if (!response.ok) {
-            throw new Error("Ошибка при загрузке мероприятия");
-        }
+    fetch(`/api/events/${eventId}`, { headers: { Authorization: "Bearer " + token } })
+    .then(response => {
+        if (!response.ok) throw new Error("Ошибка загрузки мероприятия");
         return response.json();
     })
-    .then(async (event) => {
+    .then(async event => {
         document.getElementById("event-id").textContent = event.id;
         document.getElementById("event-title").textContent = event.title || "—";
         document.getElementById("event-description").textContent = event.description || "—";
@@ -119,16 +208,12 @@
         const categoriesElement = document.getElementById("event-categories");
         if (Array.isArray(event.category_ids) && event.category_ids.length > 0) {
             try {
-                const categoryPromises = event.category_ids.map((id) =>
-                    fetch(`/api/categories/${id}`, {
-                        headers: { Authorization: "Bearer " + token },
-                    }).then((res) => (res.ok ? res.json() : null))
-                );
-                const categories = await Promise.all(categoryPromises);
-                const categoryNames = categories.filter((cat) => cat).map((cat) => cat.name);
-                categoriesElement.textContent = categoryNames.length > 0 ? categoryNames.join(", ") : "—";
-            } catch (err) {
-                console.error("Ошибка загрузки категорий:", err);
+                const categories = await Promise.all(event.category_ids.map(async id => {
+                    const res = await fetch(`/api/categories/${id}`, { headers: { Authorization: "Bearer " + token } });
+                    return res.ok ? (await res.json()).name : null;
+                }));
+                categoriesElement.textContent = categories.filter(c => c).join(", ") || "—";
+            } catch {
                 categoriesElement.textContent = "Ошибка";
             }
         } else {
@@ -138,25 +223,18 @@
         const assigneeElement = document.getElementById("event-assignee");
         if (event.assignee_id) {
             try {
-                const res = await fetch(`/api/users/${event.assignee_id}`, {
-                    headers: { Authorization: "Bearer " + token },
-                });
-                if (res.ok) {
-                    const user = await res.json();
-                    assigneeElement.textContent = user.email || "—";
-                } else {
-                    assigneeElement.textContent = "—";
-                }
-            } catch (err) {
-                console.error("Ошибка загрузки пользователя:", err);
+                const res = await fetch(`/api/users/${event.assignee_id}`, { headers: { Authorization: "Bearer " + token } });
+                const user = await res.json();
+                assigneeElement.textContent = user.email || "—";
+            } catch {
                 assigneeElement.textContent = "Ошибка";
             }
         } else {
             assigneeElement.textContent = "—";
         }
     })
-    .catch((err) => {
-        console.error("Ошибка:", err);
+    .catch(err => {
+        console.error(err);
         alert("Не удалось загрузить информацию о мероприятии");
     });
 
@@ -165,23 +243,19 @@
     });
 
     document.getElementById('delete-event').addEventListener('click', async () => {
-        if (!confirm('Вы действительно хотите удалить это мероприятие?')) {
-            return;
-        }
+        if (!confirm('Вы действительно хотите удалить это мероприятие?')) return;
         try {
             const res = await fetch(`/api/events/${eventId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             if (res.status === 204) {
-                alert('Мероприятие успешно удалено');
                 window.location.href = 'home.html';
             } else {
                 const err = await res.json();
-                throw new Error(err.detail || 'Ошибка удаления мероприятия');
+                throw new Error(err.detail || 'Ошибка удаления');
             }
         } catch (e) {
-            console.error(e);
             alert(e.message);
         }
     });

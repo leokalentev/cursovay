@@ -4,40 +4,146 @@
     <meta charset="UTF-8">
     <title>Редактировать категорию</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-        nav { background: #333; padding: 1rem; }
-        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
-        nav a:hover { text-decoration: underline; }
-        .container {
-          padding: 2rem;
-          background: white;
-          margin: 2rem auto;
-          width: 400px;
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
-        label { display: block; margin-top: 1rem; }
-        input { width: 100%; padding: 0.5rem; }
-        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+        nav {
+            background: #2c3e50;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            color: #3498db;
+        }
+        #logout {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+        #logout:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            margin: 2rem auto;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            text-align: center;
+            position: relative;
+        }
+        h2::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: #3B71CA;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            border-color: #3B71CA;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
+        }
+        .submit-btn {
+            background: #2ecc71;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .submit-btn:hover {
+            background: #27ae60;
+        }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="home.html">Мероприятия</a>
-    <a href="statuses.html">Статусы мероприятий</a>
-    <a href="categories.html">Категории мероприятий</a>
-    <a href="savedEvent.html">Избранное</a>
-    <a href="#" id="logout">Выйти</a>
+    <div class="nav-links">
+        <a href="home.html">Мероприятия</a>
+        <a href="statuses.html">Статусы мероприятий</a>
+        <a href="categories.html">Категории мероприятий</a>
+        <a href="savedEvent.html">Избранное</a>
+    </div>
+    <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
     <h2>Редактировать категорию</h2>
-    <form id="update-form">
-        <label>Название:
-            <input type="text" id="name" required>
-        </label>
-        <button type="submit">Сохранить</button>
+    <form id="update-form" autocomplete="off">
+        <div class="form-group">
+            <input type="text" id="name" required placeholder=" ">
+            <label for="name">Название</label>
+        </div>
+        <button type="submit" class="submit-btn">Сохранить</button>
     </form>
 </div>
 
@@ -54,23 +160,25 @@
     const categoryId = params.get('id');
     let original = {};
 
-    // 1) Загружаем и показываем существующую категорию
     fetch(`/api/categories/${categoryId}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     })
       .then(res => res.json())
       .then(dto => {
         original = dto;
-        document.getElementById('name').value = dto.name || '';
+        const nameInput = document.getElementById('name');
+        nameInput.value = dto.name || '';
+        // Чтобы сработал label при заполненном input
+        if(nameInput.value.trim() !== '') {
+          nameInput.classList.add('filled');
+        }
       });
 
-    // 2) Обработка сабмита
     document.getElementById('update-form').addEventListener('submit', async e => {
       e.preventDefault();
 
       const nameInput = document.getElementById('name').value.trim();
 
-      // Готовим payload (если название не изменилось, можно ничего не отправлять)
       const payload = {};
       if (nameInput !== original.name) {
         payload.name = nameInput;

@@ -4,35 +4,169 @@
     <meta charset="UTF-8">
     <title>Избранные мероприятия</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        nav { background: #333; padding: 1rem; }
-        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
-        nav a:hover { text-decoration: underline; }
-        .container { padding: 2rem; }
-        .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 1.5rem; }
-        .card {
-          position: relative; background: white; border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 1.5rem;
+        /* Базовые стили */
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
-        .card h2 { margin: 0 0 0.5rem; font-size: 1.25rem; color: #333; }
-        .card p { margin: 0 0 1rem; color: #555; }
-        .btn-group { display: flex; gap: 0.5rem; }
-        .view-btn { background: #007bff; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-        .view-btn:hover { background: #0056b3; }
+
+        /* Навигация */
+        nav {
+            background: #2c3e50;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #3498db;
+        }
+
+        #logout {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+
+        #logout:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Основной контент */
+        .container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        /* Карточки мероприятий */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            margin: 0 0 1rem;
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+
+        .card p {
+            margin: 0 0 1.5rem;
+            color: #555;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+
+        .btn-group button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .view-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .view-btn:hover {
+            background: #2980b9;
+        }
+
+        /* Избранное */
         .fav {
-          position: absolute;
-          top: 10px; right: 10px;
-          font-size: 1.5rem;
-          cursor: pointer;
-          color: #e74c3c;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        .fav.active {
+            color: #e74c3c;
+            animation: heartbeat 0.5s ease;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
 <nav>
-    <a href="usersHome.html">Мероприятия</a>
-    <a href="savedEventUsers.html">Избранное</a>
-    <a href="#" id="logout">Выйти</a>
+    <div class="nav-links">
+        <a href="usersHome.html">Мероприятия</a>
+        <a href="savedEventUsers.html">Избранное</a>
+    </div>
+    <button id="logout">Выйти</button>
 </nav>
 <div class="container">
     <h1>Избранные мероприятия</h1>
@@ -42,20 +176,20 @@
 <script>
     const token = localStorage.getItem('token');
     if (!token) location.href = 'login.html';
-    document.getElementById('logout').onclick = ()=>{
+    document.getElementById('logout').onclick = () => {
       localStorage.removeItem('token');
-      location.href = 'login.html';
+      location.href = '../login.html';
     };
 
     function getFavs() {
-      return JSON.parse(localStorage.getItem('favourites')||'[]');
+      return JSON.parse(localStorage.getItem('favourites') || '[]');
     }
     function toggleFav(id) {
       const favs = getFavs();
       const idx = favs.indexOf(id);
-      if (idx>=0) favs.splice(idx,1);
+      if (idx >= 0) favs.splice(idx, 1);
       else favs.push(id);
-      localStorage.setItem('favourites',JSON.stringify(favs));
+      localStorage.setItem('favourites', JSON.stringify(favs));
       loadSaved();
     }
 
@@ -66,17 +200,16 @@
         cont.innerHTML = '<p>Нет избранных мероприятий.</p>';
         return;
       }
-      // запрашиваем каждое событие
-      const cards = await Promise.all(favs.map(async id=>{
-        const res = await fetch(`/api/events/${id}`, {headers:{'Authorization':'Bearer '+token}});
+      const cards = await Promise.all(favs.map(async id => {
+        const res = await fetch(`/api/events/${id}`, { headers: { 'Authorization': 'Bearer ' + token } });
         if (!res.ok) return null;
         return res.json();
       }));
-      cont.innerHTML = cards.filter(e=>e).map(e=>`
+      cont.innerHTML = cards.filter(e => e).map(e => `
         <div class="card">
-          <div class="fav" onclick="toggleFav(${e.id})">❤</div>
+          <div class="fav active" onclick="toggleFav(${e.id})">❤</div>
           <h2>${e.title}</h2>
-          <p>${e.description||'Описание отсутствует'}</p>
+          <p>${e.description || 'Описание отсутствует'}</p>
           <div class="btn-group">
             <button class="view-btn" onclick="location.href='showEventUsers.html?id=${e.id}'">Просмотр</button>
           </div>

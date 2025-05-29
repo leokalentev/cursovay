@@ -1,49 +1,227 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Редактировать мероприятие</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-        nav { background: #333; padding: 1rem; }
-        nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
-        .container { padding: 2rem; background: white; width: 400px; margin: 2rem auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        label { display: block; margin-top: 1rem; }
-        input, select { width: 100%; padding: 0.5rem; }
-        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        nav {
+            background: #2c3e50;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            color: #3498db;
+        }
+        #logout {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+        #logout:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            margin: 2rem auto;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            text-align: center;
+            position: relative;
+        }
+        h2::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: #3B71CA;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .form-group label {
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            color: #999;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            background: white;
+            padding: 0 4px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #3B71CA;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
+        }
+        .form-group input:not(:placeholder-shown) + label,
+        .form-group input:focus + label,
+        .form-group select:not([value='']):valid + label,
+        .form-group select:focus + label,
+        .form-group textarea:not(:placeholder-shown) + label,
+        .form-group textarea:focus + label {
+            top: -8px;
+            left: 12px;
+            font-size: 12px;
+            color: #3B71CA;
+            background: white;
+        }
+        .submit-btn {
+            background: #2ecc71;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .submit-btn:hover {
+            background: #27ae60;
+        }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+        .success-message {
+    background: #d4edda;
+    border-left: 6px solid #1a8d4b;
+    color: #155724;
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    position: relative;
+    animation: fade-in 0.5s;
+}
+
+.success-message button.close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="usersHome.html">Мероприятия</a>
-    <a href="savedEventUsers.html">Избранное</a>
-    <a href="/assets/login.html" id="logout">Выйти</a>
+    <div class="nav-links">
+        <a href="usersHome.html">Мероприятия</a>
+        <a href="savedEventUsers.html">Избранное</a>
+    </div>
+    <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
+    <div class="success-message" id="successMessage" style="display: none;">
+        Мероприятие успешно обновлено!
+        <button class="close" onclick="document.getElementById('successMessage').style.display='none';">&times;</button>
+    </div>
     <h2>Редактировать мероприятие</h2>
     <form id="update-form">
-        <label>Название:
-            <input type="text" id="title">
-        </label>
-        <label>Описание:
-            <input type="text" id="description">
-        </label>
-        <label>Статус:
-            <select id="status"></select>
-        </label>
-        <label>Дата проведения:
-            <input type="date" id="eventDate">
-        </label>
-        <label>Категория:
-            <select id="categoryId"></select>
-        </label>
-        <label>Исполнитель:
-            <select id="assigneeId" disabled></select>
-        </label>
-        <button type="submit">Сохранить</button>
-        <p id="error" style="color:red;"></p>
+        <div class="form-group">
+            <input type="text" id="title" placeholder=" " required />
+            <label>Название *</label>
+        </div>
+        <div class="form-group">
+            <textarea id="description" placeholder=" "></textarea>
+            <label>Описание</label>
+        </div>
+        <div class="form-group">
+            <select id="status" required>
+                <option value=""></option>
+            </select>
+            <label>Статус *</label>
+        </div>
+        <div class="form-group">
+            <input type="date" id="eventDate" required/>
+            <label>Дата проведения</label>
+        </div>
+        <div class="form-group">
+            <select id="categoryId" required>
+                <option value=""></option>
+            </select>
+            <label>Категория *</label>
+        </div>
+        <div class="form-group">
+            <select id="assigneeId" required>
+                <option value=""></option>
+            </select>
+            <label>Исполнитель *</label>
+        </div>
+        <button type="submit" class="submit-btn">Сохранить</button>
+        <p id="error"></p>
     </form>
 </div>
 
@@ -53,114 +231,94 @@
 
     document.getElementById('logout').addEventListener('click', () => {
       localStorage.removeItem('token');
-      location.href = 'login.html';
+      location.href = '../login.html';
     });
 
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
     let originalEvent = {};
-    let currentUserId = null;
 
-    // Получение текущего пользователя
-    fetch('/api/users/me', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-      .then(r => r.json())
-      .then(user => {
-        currentUserId = user.id;
+    // Получаем профиль пользователя
+    fetch('/api/users/me', { headers:{ 'Authorization':'Bearer '+token } })
+      .then(r=>r.json())
+      .then(user=>{
         const sel = document.getElementById('assigneeId');
         const opt = document.createElement('option');
-        opt.value = user.id;
-        opt.textContent = user.email;
-        sel.appendChild(opt);
-        sel.value = user.id;
+        opt.value = user.id; opt.textContent = user.email;
+        sel.append(opt); sel.value = user.id;
       });
 
-    // Получение данных мероприятия
-    fetch(`/api/events/${eventId}`, {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-      .then(r => r.json())
-      .then(event => {
+    // Загружаем данные события, статусы и категории
+    fetch(`/api/events/${eventId}`, { headers:{ 'Authorization':'Bearer '+token } })
+      .then(r=>r.json())
+      .then(event=>{
         originalEvent = event;
-        document.getElementById('title').value = event.title || '';
-        document.getElementById('description').value = event.description || '';
-        document.getElementById('eventDate').value = event.eventDate?.substring(0, 10) || '';
+        document.getElementById('title').value = event.title||'';
+        document.getElementById('description').value = event.description||'';
+        document.getElementById('eventDate').value = event.eventDate?.slice(0,10)||'';
 
         // Статусы
-        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
-          .then(r => r.json())
-          .then(statuses => {
-            const s = document.getElementById('status');
-            statuses.forEach(st => {
+        fetch('/api/eventStatuses', { headers:{ 'Authorization':'Bearer '+token }})
+          .then(r=>r.json())
+          .then(list=>{
+            const sel = document.getElementById('status');
+            list.forEach(st=>{
               const o = document.createElement('option');
-              o.value = st.slug;
-              o.textContent = st.name;
-              s.appendChild(o);
+              o.value = st.slug; o.textContent = st.name;
+              sel.append(o);
             });
-            s.value = event.status || '';
+            sel.value = event.status||'';
           });
 
         // Категории
-        fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
-          .then(r => r.json())
-          .then(cats => {
-            const c = document.getElementById('categoryId');
-            cats.forEach(cat => {
+        fetch('/api/categories', { headers:{ 'Authorization':'Bearer '+token }})
+          .then(r=>r.json())
+          .then(list=>{
+            const sel = document.getElementById('categoryId');
+            list.forEach(cat=>{
               const o = document.createElement('option');
-              o.value = cat.id;
-              o.textContent = cat.name;
-              c.appendChild(o);
+              o.value = cat.id; o.textContent = cat.name;
+              sel.append(o);
             });
-            if (event.categoryIds?.length > 0) {
-              c.value = event.categoryIds[0];
-            }
+            if(event.categoryIds?.length) sel.value = event.categoryIds[0];
           });
       });
 
-    // Обновление мероприятия
-    document.getElementById('update-form').addEventListener('submit', async e => {
+    // Обработка отправки формы
+    document.getElementById('update-form').addEventListener('submit', async e=>{
       e.preventDefault();
-
       const title = document.getElementById('title').value.trim();
       const status = document.getElementById('status').value;
       const description = document.getElementById('description').value.trim();
       const eventDate = document.getElementById('eventDate').value;
-      const categoryId = parseInt(document.getElementById('categoryId').value);
+      const categoryId = document.getElementById('categoryId').value;
 
-      const updatedEvent = { title, status };
-
-      if (description !== (originalEvent.description || '')) {
-        updatedEvent.description = description;
+      const errEl = document.getElementById('error');
+      errEl.textContent = '';
+      if (!categoryId) {
+        errEl.textContent = 'Пожалуйста, выберите категорию.';
+        return;
       }
 
-      if (eventDate !== (originalEvent.eventDate?.substring(0, 10) || '')) {
-        updatedEvent.eventDate = eventDate;
-      }
-
-      if (!isNaN(categoryId) && !originalEvent.categoryIds?.includes(categoryId)) {
-        updatedEvent.category_ids = [categoryId];
-      }
+      const updated = { title, status };
+      if(description!==originalEvent.description) updated.description=description;
+      if(eventDate!==originalEvent.eventDate?.slice(0,10)) updated.eventDate=eventDate;
+      if(categoryId && !originalEvent.categoryIds?.includes(+categoryId)) updated.category_ids=[+categoryId];
 
       try {
         const res = await fetch(`/api/events/${eventId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
+          method:'PUT',
+          headers:{
+            'Content-Type':'application/json',
+            'Authorization':'Bearer '+token
           },
-          body: JSON.stringify(updatedEvent)
+          body:JSON.stringify(updated)
         });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.detail || 'Ошибка обновления');
-        }
-
+        if(!res.ok) throw new Error((await res.json()).detail||'Ошибка обновления');
         alert('Мероприятие обновлено');
-        location.href = `showEventUsers.html?id=${eventId}`;
-      } catch (err) {
-        document.getElementById('error').innerText = 'Ошибка обновления: ' + err.message;
+        location.href=`showEventUsers.html?id=${eventId}`;
+      } catch(err) {
+        errEl.textContent = 'Ошибка обновления: ' + err.message;
       }
     });
 </script>

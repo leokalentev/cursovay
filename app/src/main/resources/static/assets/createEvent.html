@@ -5,96 +5,281 @@
     <title>Создание мероприятия (Админ)</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
+
         nav {
-            background: #333;
-            padding: 1rem;
+            background: #2c3e50;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        nav a {
-            color: #fff;
-            margin-right: 1rem;
+
+        .nav-logo {
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
             text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s ease;
         }
-        nav a:hover {
-            text-decoration: underline;
+
+        .nav-links a:hover {
+            color: #3498db;
         }
-        .container {
-            padding: 2rem;
-            background-color: white;
-            margin: 2rem auto;
-            width: 400px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        label {
-            display: block;
-            margin-top: 1rem;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        button {
-            margin-top: 1rem;
+
+        #logout {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
             padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.3s ease;
         }
+
+        #logout:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            margin: 2rem auto;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        h2::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: #3B71CA;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .form-group label {
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            color: #999;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            background: white;
+            padding: 0 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #3B71CA;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
+        }
+
+        .form-group input:not(:placeholder-shown) + label,
+        .form-group input:focus + label,
+        .form-group select:not([value='']):valid + label,
+        .form-group select:focus + label,
+        .form-group textarea:not(:placeholder-shown) + label,
+        .form-group textarea:focus + label {
+            top: -8px;
+            left: 12px;
+            font-size: 12px;
+            color: #3B71CA;
+            background: white;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-btn {
+            background: #2ecc71;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .submit-btn:hover {
+            background: #27ae60;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
         .error {
-            color: red;
+            color: #e74c3c;
+            margin-top: 1rem;
+            display: none;
+            animation: shake 0.5s;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border-left: 6px solid #1a8d4b;
+            color: #155724;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            position: relative;
+            animation: fade-in 0.5s;
+        }
+
+        .success-message button.close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="home.html">Мероприятия</a>
-    <a href="statuses.html">Статусы мероприятий</a>
-    <a href="categories.html">Категории мероприятий</a>
-    <a href="savedEvent.html">Избранное</a>
-    <a href="#" id="logout">Выйти</a>
+    <div class="nav-logo">Создание мероприятия</div>
+    <div class="nav-links">
+        <a href="home.html">Мероприятия</a>
+        <a href="statuses.html">Статусы</a>
+        <a href="categories.html">Категории</a>
+        <a href="savedEvent.html">Избранное</a>
+    </div>
+    <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
     <h2>Создать мероприятие</h2>
+
+    <div class="success-message" style="display: none;">
+        Мероприятие успешно создано!
+        <button class="close">&times;</button>
+    </div>
+
     <form id="createEventForm">
-        <label>Название:
-            <input type="text" id="title" placeholder="Название" required />
-        </label>
-        <label>Описание:
-            <textarea id="description" placeholder="Описание"></textarea>
-        </label>
-        <label>Статус:
+        <div class="form-group">
+            <input type="text" id="title" placeholder=" " required />
+            <label>Название *</label>
+        </div>
+        <div class="form-group">
+            <textarea id="description" placeholder=" "></textarea>
+            <label>Описание</label>
+        </div>
+        <div class="form-group">
             <select id="status" required>
-                <option value="">Выберите статус</option>
+                <option value=""></option>
             </select>
-        </label>
-        <label>Дата проведения:
+            <label>Статус *</label>
+        </div>
+        <div class="form-group">
             <input type="date" id="eventDate" />
-        </label>
-        <label>Категория:
+            <label>Дата проведения</label>
+        </div>
+        <div class="form-group">
             <select id="categoryId" required>
-                <option value="">Выберите категорию</option>
+                <option value=""></option>
             </select>
-        </label>
-        <label>Исполнитель:
+            <label>Категория *</label>
+        </div>
+        <div class="form-group">
             <select id="assigneeId" required>
-                <option value="">Выберите исполнителя</option>
+                <option value=""></option>
             </select>
-        </label>
-        <button type="submit">Создать</button>
+            <label>Исполнитель *</label>
+        </div>
+        <button type="submit" class="submit-btn">Создать мероприятие</button>
         <p id="error" class="error"></p>
     </form>
 </div>
 
 <script>
     const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = 'login.html';
-    }
+    if (!token) window.location.href = 'login.html';
 
     document.getElementById('logout').addEventListener('click', () => {
         localStorage.removeItem('token');
@@ -106,9 +291,7 @@
       .then(data => {
           const statusSelect = document.getElementById('status');
           data.forEach(status => {
-              const option = document.createElement('option');
-              option.value = status.slug;
-              option.textContent = status.name;
+              const option = new Option(status.name, status.slug);
               statusSelect.appendChild(option);
           });
       });
@@ -118,9 +301,7 @@
       .then(data => {
           const categorySelect = document.getElementById('categoryId');
           data.forEach(cat => {
-              const option = document.createElement('option');
-              option.value = cat.id;
-              option.textContent = cat.name;
+              const option = new Option(cat.name, cat.id);
               categorySelect.appendChild(option);
           });
       });
@@ -130,9 +311,7 @@
       .then(data => {
           const assigneeSelect = document.getElementById('assigneeId');
           data.forEach(user => {
-              const option = document.createElement('option');
-              option.value = user.id;
-              option.textContent = user.email;
+              const option = new Option(user.email, user.id);
               assigneeSelect.appendChild(option);
           });
       });
@@ -140,15 +319,19 @@
     document.getElementById('createEventForm').addEventListener('submit', async function (event) {
         event.preventDefault();
 
+        const error = document.getElementById('error');
+        error.style.display = 'none';
+
         const title = document.getElementById('title').value.trim();
         const description = document.getElementById('description').value.trim();
         const status = document.getElementById('status').value;
         const eventDate = document.getElementById('eventDate').value;
-        const categoryId = parseInt(document.getElementById('categoryId').value);
+        const categoryId = document.getElementById('categoryId').value;
         const assigneeId = document.getElementById('assigneeId').value;
 
         if (!title || !status || !categoryId || !assigneeId) {
-            document.getElementById('error').innerText = 'Все обязательные поля должны быть заполнены.';
+            error.textContent = 'Пожалуйста, заполните все обязательные поля';
+            error.style.display = 'block';
             return;
         }
 
@@ -170,16 +353,24 @@
             });
 
             if (response.ok) {
-                alert('Мероприятие успешно создано!');
                 document.getElementById('createEventForm').reset();
-                window.location.href = 'home.html';
+                document.querySelector('.success-message').style.display = 'block';
+                setTimeout(() => {
+                    document.querySelector('.success-message').style.display = 'none';
+                }, 5000);
             } else {
-                const errorData = await response.json();
-                document.getElementById('error').innerText = errorData.message || 'Ошибка создания';
+                const errData = await response.json();
+                error.textContent = errData.message || 'Ошибка создания мероприятия';
+                error.style.display = 'block';
             }
-        } catch (error) {
-            document.getElementById('error').innerText = 'Ошибка сервера';
+        } catch {
+            error.textContent = 'Сетевая ошибка. Попробуйте позже';
+            error.style.display = 'block';
         }
+    });
+
+    document.querySelector('.success-message .close').addEventListener('click', () => {
+        document.querySelector('.success-message').style.display = 'none';
     });
 </script>
 
