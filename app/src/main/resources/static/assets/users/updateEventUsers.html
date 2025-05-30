@@ -198,7 +198,6 @@
     const eventId = urlParams.get('id');
     let originalEvent = {};
 
-    // Получаем профиль пользователя
     fetch('/api/users/me', { headers:{ 'Authorization':'Bearer '+token } })
       .then(r=>r.json())
       .then(user=>{
@@ -208,7 +207,6 @@
         sel.append(opt); sel.value = user.id;
       });
 
-    // Загружаем данные события, статусы и категории
     fetch(`/api/events/${eventId}`, { headers:{ 'Authorization':'Bearer '+token } })
       .then(r=>r.json())
       .then(event=>{
@@ -217,7 +215,6 @@
         document.getElementById('description').value = event.description||'';
         document.getElementById('eventDate').value = event.eventDate?.slice(0,10)||'';
 
-        // Статусы
         fetch('/api/eventStatuses', { headers:{ 'Authorization':'Bearer '+token }})
           .then(r=>r.json())
           .then(list=>{
@@ -230,7 +227,6 @@
             sel.value = event.status||'';
           });
 
-        // Категории
         fetch('/api/categories', { headers:{ 'Authorization':'Bearer '+token }})
           .then(r=>r.json())
           .then(list=>{
@@ -244,7 +240,6 @@
           });
       });
 
-    // Обработка отправки формы
     document.getElementById('update-form').addEventListener('submit', async e=>{
       e.preventDefault();
       const title = document.getElementById('title').value.trim();
@@ -275,8 +270,8 @@
           body:JSON.stringify(updated)
         });
         if(!res.ok) throw new Error((await res.json()).detail||'Ошибка обновления');
-        alert('Мероприятие обновлено');
-        location.href=`showEventUsers.html?id=${eventId}`;
+        document.getElementById('successMessage').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch(err) {
         errEl.textContent = 'Ошибка обновления: ' + err.message;
       }

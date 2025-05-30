@@ -299,8 +299,11 @@
         });
 
         if (res.ok) {
-          alert('Мероприятие создано');
-          location.href = 'usersHome.html';
+          document.getElementById('createEventForm').reset();
+          document.querySelector('.success-message').style.display = 'block';
+            setTimeout(() => {
+                document.querySelector('.success-message').style.display = 'none';
+            }, 5000);
         } else {
           const err = await res.json();
           document.getElementById('error').innerText = err.detail || 'Ошибка';

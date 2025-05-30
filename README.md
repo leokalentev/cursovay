@@ -4,4 +4,4 @@
 
 ### Сайт
 
-[![Перейти](https://java-project-99-uybr.onrender.com)](https://java-project-99-uybr.onrender.com)
+[![Перейти](https://cursovay.onrender.com)](https://cursovay.onrender.com)
