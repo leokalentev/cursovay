@@ -58,7 +58,9 @@ public abstract class EventMapper {
 
     @Named("mapCategoryId")
     protected Category mapCategoryId(Long categoryId) {
-        if (categoryId == null) return null;
+        if (categoryId == null) {
+            return null;
+        }
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category не найдена"));
     }
