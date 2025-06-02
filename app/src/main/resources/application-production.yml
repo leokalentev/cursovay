@@ -1,3 +1,6 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   datasource:
     url: ${JDBC_DATABASE_URL}
@@ -14,8 +17,3 @@ rsa:
   private-key: classpath:certs/private.pem
   public-key: classpath:certs/public.pem
 
-sentry:
-  dsn: ${SENTRY_DSN}
-  environment: ${SENTRY_ENVIRONMENT:production}
-  traces-sample-rate: 1.0
-  debug: true
