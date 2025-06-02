@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -140,18 +141,20 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы</a>
         <a href="categories.html">Категории</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
-    <div class="success-message" id="successMessage" style="display: none;">
-        Мероприятие успешно обновлено!
+    <div class="success-message" style="display: none;" id="successMessage">
+        <span>Мероприятие успешно обновлено!</span>
         <button class="close" onclick="document.getElementById('successMessage').style.display='none';">&times;</button>
     </div>
     <h2>Редактировать мероприятие</h2>
-    <form id="update-form">
+    <p id="no-permission" style="display: none; color: red;">
+        У вас нет прав на редактирование этого мероприятия.
+    </p>
+    <form id="updateEventForm">
         <div class="form-group">
             <input type="text" id="title" placeholder=" " required />
             <label>Название *</label>
@@ -183,99 +186,142 @@
             <label>Исполнитель *</label>
         </div>
         <button type="submit" class="submit-btn">Сохранить изменения</button>
+        <p id="error" class="error" style="color: red;"></p>
     </form>
 </div>
 
 <script>
-    // JavaScript код остается без изменений
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const eventId = urlParams.get('id');
+    const eventId = new URLSearchParams(window.location.search).get('id');
     let originalEvent = {};
 
-    fetch(`/api/events/${eventId}`, {
-        headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(res => res.json())
-    .then(event => {
-        originalEvent = event;
-        document.getElementById('title').value = event.title || '';
-        document.getElementById('description').value = event.description || '';
-        document.getElementById('eventDate').value = event.eventDate ? event.eventDate.substring(0,10) : '';
-
-        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(res => res.json())
-            .then(statuses => {
-                const statusSelect = document.getElementById('status');
-                statuses.forEach(status => {
-                    const option = new Option(status.name, status.slug);
-                    statusSelect.appendChild(option);
-                });
-                statusSelect.value = event.status || '';
+    async function loadStatuses(selectedStatus) {
+        try {
+            const res = await fetch('/api/eventStatuses', {
+                headers: { 'Authorization': 'Bearer ' + token }
             });
-
-        fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(res => res.json())
-            .then(categories => {
-                const categorySelect = document.getElementById('categoryId');
-                categories.forEach(cat => {
-                    const option = new Option(cat.name, cat.id);
-                    categorySelect.appendChild(option);
-                });
-                if (event.categoryIds && event.categoryIds.length > 0) {
-                    categorySelect.value = event.categoryIds[0];
-                }
+            const list = await res.json();
+            const sel = document.getElementById('status');
+            list.forEach(st => {
+                const o = new Option(st.name, st.slug);
+                sel.appendChild(o);
             });
+            if (selectedStatus) {
+                sel.value = selectedStatus;
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки статусов:', e);
+        }
+    }
 
-        fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(res => res.json())
-            .then(users => {
-                const assigneeSelect = document.getElementById('assigneeId');
-                users.forEach(user => {
-                    const option = new Option(user.email, user.id);
-                    assigneeSelect.appendChild(option);
-                });
-                if (event.assigneeId) {
-                    assigneeSelect.value = event.assigneeId;
-                }
+    async function loadCategories(selectedCategoryId) {
+        try {
+            const res = await fetch('/api/categories', {
+                headers: { 'Authorization': 'Bearer ' + token }
             });
-    });
+            const list = await res.json();
+            const sel = document.getElementById('categoryId');
+            list.forEach(cat => {
+                const o = new Option(cat.name, cat.id);
+                sel.appendChild(o);
+            });
+            if (selectedCategoryId) {
+                sel.value = selectedCategoryId;
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки категорий:', e);
+        }
+    }
 
-    document.getElementById('update-form').addEventListener('submit', async e => {
+    async function loadUsers(selectedAssigneeId) {
+        try {
+            const res = await fetch('/api/users', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const list = await res.json();
+            const sel = document.getElementById('assigneeId');
+            list.forEach(user => {
+                const o = new Option(user.email, user.id);
+                sel.appendChild(o);
+            });
+            if (selectedAssigneeId) {
+                sel.value = selectedAssigneeId;
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки пользователей:', e);
+        }
+    }
+
+    async function initForm() {
+        try {
+            // Сначала получаем EventDTO
+            const res = await fetch(`/api/events/${eventId}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('Ошибка загрузки мероприятия');
+            const event = await res.json();
+
+            if (!event.canEdit) {
+                document.getElementById('updateEventForm').style.display = 'none';
+                document.getElementById('no-permission').style.display = 'block';
+                return;
+            }
+
+            originalEvent = event;
+            document.getElementById('title').value = event.title || '';
+            document.getElementById('description').value = event.description || '';
+            document.getElementById('eventDate').value = event.eventDate ? event.eventDate.substring(0, 10) : '';
+
+            await loadStatuses(event.status);
+            await loadCategories(event.category_id);
+            await loadUsers(event.assignee_id);
+
+        } catch (e) {
+            console.error('Ошибка при инициализации формы:', e);
+            alert('Не удалось загрузить данные мероприятия');
+        }
+    }
+
+    initForm();
+
+    document.getElementById('updateEventForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const updatedEvent = {};
+        const errorEl = document.getElementById('error');
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
 
-        const title = document.getElementById('title').value.trim();
-        const status = document.getElementById('status').value;
-        updatedEvent.title = title;
-        updatedEvent.status = status;
-
+        const title       = document.getElementById('title').value.trim();
         const description = document.getElementById('description').value.trim();
+        const status      = document.getElementById('status').value;
+        const eventDate   = document.getElementById('eventDate').value;
+        const categoryId  = document.getElementById('categoryId').value;
+        const assigneeId  = document.getElementById('assigneeId').value;
+
+        if (!title || !status || !categoryId || !assigneeId) {
+            errorEl.textContent = 'Пожалуйста, заполните все обязательные поля';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        const updatedEvent = {
+            title,
+            status,
+            eventDate,
+            category_id: +categoryId,
+            assigneeId: +assigneeId
+        };
         if (description !== (originalEvent.description || '')) {
             updatedEvent.description = description;
-        }
-
-        const eventDate = document.getElementById('eventDate').value;
-        if (eventDate !== (originalEvent.eventDate?.substring(0,10) || '')) {
-            updatedEvent.eventDate = eventDate;
-        }
-
-        const categoryId = parseInt(document.getElementById('categoryId').value);
-        if (!isNaN(categoryId) && !originalEvent.categoryIds?.includes(categoryId)) {
-            updatedEvent.category_ids = [categoryId];
-        }
-
-        const assigneeId = parseInt(document.getElementById('assigneeId').value);
-        if (originalEvent.assigneeId !== assigneeId) {
-            updatedEvent.assigneeId = assigneeId;
         }
 
         try {
@@ -287,16 +333,30 @@
                 },
                 body: JSON.stringify(updatedEvent)
             });
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.detail || 'Ошибка обновления');
+
+            if (res.ok) {
+                document.getElementById('successMessage').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 5000);
+            } else if (res.status === 403) {
+                errorEl.textContent = 'У вас больше нет прав на изменение этого мероприятия.';
+                errorEl.style.display = 'block';
+                document.getElementById('updateEventForm').style.display = 'none';
+                document.getElementById('no-permission').style.display = 'block';
+            } else {
+                const errData = await res.json();
+                errorEl.textContent = errData.message || 'Ошибка обновления мероприятия';
+                errorEl.style.display = 'block';
             }
-            document.getElementById('successMessage').style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (err) {
-            console.error(err);
-            alert('Ошибка обновления: ' + err.message);
+        } catch {
+            errorEl.textContent = 'Сетевая ошибка. Попробуйте позже';
+            errorEl.style.display = 'block';
         }
+    });
+
+    document.querySelector('.success-message .close').addEventListener('click', () => {
+        document.getElementById('successMessage').style.display = 'none';
     });
 </script>
 </body>

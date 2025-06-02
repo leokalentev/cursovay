@@ -38,11 +38,11 @@
             max-width: 400px;
             margin: 0 auto;
         }
-        .form-group {
+        .input-group, .form-group {
             margin-bottom: 2rem;
             position: relative;
         }
-        .form-group input {
+        .input-group input, .form-group input {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e0e0e0;
@@ -51,10 +51,31 @@
             transition: all 0.3s ease;
             box-sizing: border-box;
         }
-        .form-group input:focus {
+        .input-group input:focus, .form-group input:focus {
             border-color: #3B71CA;
             outline: none;
             box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
+        }
+        .input-group label, .form-group label {
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            color: #999;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            background: white;
+            padding: 0 4px;
+        }
+        .input-group input:not(:placeholder-shown) + label,
+        .input-group input:focus + label,
+        .form-group input:not(:placeholder-shown) + label,
+        .form-group input:focus + label {
+            top: -8px;
+            left: 12px;
+            font-size: 12px;
+            color: #3B71CA;
+            background: white;
         }
         .submit-btn {
             background: #2ecc71;
@@ -74,6 +95,29 @@
         .submit-btn:active {
             transform: scale(0.98);
         }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .error {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -83,80 +127,114 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы мероприятий</a>
         <a href="categories.html">Категории мероприятий</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
     <h2>Редактировать категорию</h2>
-    <form id="update-form" autocomplete="off">
-        <div class="form-group">
-            <input type="text" id="name" required placeholder=" ">
-            <label for="name">Название</label>
+    <form id="updateCategoryForm">
+        <div class="input-group">
+            <input type="text" id="name" placeholder=" " required />
+            <label for="name">Название категории</label>
         </div>
         <button type="submit" class="submit-btn">Сохранить</button>
+        <button type="button" class="delete-btn" id="delete-category">Удалить</button>
+        <p id="error" class="error">Ошибка при сохранении</p>
     </form>
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
 
     document.getElementById('logout').addEventListener('click', () => {
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
+        sessionStorage.removeItem('token');
+        window.location.href = 'login.html';
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const categoryId = params.get('id');
-    let original = {};
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('id');
+    let originalCategory = {};
 
     fetch(`/api/categories/${categoryId}`, {
-      headers: { 'Authorization': 'Bearer ' + token }
+        headers: { 'Authorization': 'Bearer ' + token }
     })
-      .then(res => res.json())
-      .then(dto => {
-        original = dto;
-        const nameInput = document.getElementById('name');
-        nameInput.value = dto.name || '';
-        // Чтобы сработал label при заполненном input
-        if(nameInput.value.trim() !== '') {
-          nameInput.classList.add('filled');
-        }
-      });
-
-    document.getElementById('update-form').addEventListener('submit', async e => {
-      e.preventDefault();
-
-      const nameInput = document.getElementById('name').value.trim();
-
-      const payload = {};
-      if (nameInput !== original.name) {
-        payload.name = nameInput;
-      }
-
-      try {
-        const res = await fetch(`/api/categories/${categoryId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Ошибка обновления категории');
-        }
-        alert('Категория успешно обновлена');
-        window.location.href = `showCategory.html?id=${categoryId}`;
-      } catch (err) {
+    .then(res => {
+        if (!res.ok) throw new Error('Ошибка загрузки категории');
+        return res.json();
+    })
+    .then(cat => {
+        originalCategory = cat;
+        document.getElementById('name').value = cat.name || '';
+    })
+    .catch(err => {
         console.error(err);
-        alert(err.message);
-      }
+        alert('Не удалось загрузить категорию');
+    });
+
+    document.getElementById('updateCategoryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errorEl = document.getElementById('error');
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+            errorEl.innerText = 'Название обязательно';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        if (name === originalCategory.name) {
+            // Ничего не менять, просто вернуться
+            window.location.href = `showCategory.html?id=${categoryId}`;
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/categories/${categoryId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ name })
+            });
+            if (res.ok) {
+                window.location.href = `showCategory.html?id=${categoryId}`;
+            } else {
+                const errData = await res.json();
+                errorEl.innerText = errData.detail || 'Ошибка обновления';
+                errorEl.style.display = 'block';
+            }
+        } catch {
+            errorEl.innerText = 'Сетевая ошибка';
+            errorEl.style.display = 'block';
+        }
+    });
+
+    document.getElementById('delete-category').addEventListener('click', async () => {
+        if (!confirm('Вы действительно хотите удалить эту категорию?')) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/categories/${categoryId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 204) {
+                window.location.href = 'categories.html';
+            } else {
+                const errData = await res.json();
+                alert(errData.detail || 'Ошибка удаления категории');
+            }
+        } catch {
+            alert('Ошибка сети');
+        }
     });
 </script>
-
 </body>
 </html>

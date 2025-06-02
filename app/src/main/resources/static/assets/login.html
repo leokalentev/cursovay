@@ -186,7 +186,7 @@
 
             if (response.ok) {
                 const token = await response.text();
-                localStorage.setItem("token", token);
+                sessionStorage.setItem('token', token)
 
                 if (email === "admin@kpfu.ru") {
                     window.location.href = "home.html";

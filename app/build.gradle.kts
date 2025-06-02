@@ -55,7 +55,7 @@ dependencies {
 	implementation("io.sentry:sentry-logback:8.12.0")
 	implementation("org.json:json:20250107")
 	implementation("io.github.cdimascio:dotenv-java:3.0.0")
-
+	implementation("org.postgresql:postgresql")
 }
 
 tasks.withType<Test> {

@@ -19,10 +19,6 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Mapper(
         uses = {JsonNullableMapper.class},
@@ -42,44 +38,30 @@ public abstract class EventMapper {
     private UserRepository userRepository;
 
     @Mapping(source = "eventStatus.slug", target = "status")
-    @Mapping(target = "categoryIds", expression = "java(mapCategoriesToIds(event.getCategories()))")
-    @Mapping(source = "description", target = "description")
-    @Mapping(source = "title", target = "title")
-    @Mapping(source = "eventDate", target = "eventDate")
+    @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(source = "createdAt", target = "createdAt")
     public abstract EventDTO map(Event event);
 
-    protected Set<Long> mapCategoriesToIds(Set<Category> categories) {
-        if (categories == null) {
-            return Collections.emptySet();
-        }
-        return categories.stream()
-                .map(Category::getId)
-                .collect(Collectors.toSet());
-    }
-
     @Mapping(source = "status", target = "eventStatus", qualifiedByName = "mapStatus")
-    @Mapping(target = "categories", expression = "java(mapCategories(dto.getCategoryIds()))")
+    @Mapping(source = "categoryId", target = "category", qualifiedByName = "mapCategoryId")
+    @Mapping(source = "title",   target = "title")
     @Mapping(source = "description", target = "description")
-    @Mapping(source = "title", target = "title")
-    @Mapping(source = "assigneeId", target = "assignee", qualifiedByName = "mapAssigneeId")
     @Mapping(source = "eventDate", target = "eventDate")
     public abstract Event map(EventCreateDTO dto);
-
-    protected Set<Category> mapCategories(Set<Long> categoryIds) {
-        if (categoryIds == null) {
-            return Collections.emptySet();
-        }
-        return new HashSet<>(categoryRepository.findAllById(categoryIds));
-    }
 
     @Named("mapStatus")
     protected EventStatus mapStatus(String slug) {
         return eventStatusRepository.findBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("EventStatus not found"));
+                .orElseThrow(() -> new RuntimeException("EventStatus не найден"));
     }
 
+    @Named("mapCategoryId")
+    protected Category mapCategoryId(Long categoryId) {
+        if (categoryId == null) return null;
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category не найдена"));
+    }
 
     @Named("mapAssigneeId")
     protected User mapAssigneeId(Long assigneeId) {
@@ -87,13 +69,13 @@ public abstract class EventMapper {
             return null;
         }
         return userRepository.findById(assigneeId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User не найден"));
     }
 
     @Mapping(source = "status", target = "eventStatus", qualifiedByName = "mapStatus")
-    @Mapping(source = "assigneeId", target = "assignee", qualifiedByName = "mapAssigneeId")
-    @Mapping(target = "categories", expression = "java(mapCategories(eventUpdateDTO.getCategoryIds().orElse(null)))")
-    public abstract void update(EventUpdateDTO eventUpdateDTO, @MappingTarget Event event);
+    @Mapping(source = "categoryId", target = "category", qualifiedByName = "mapCategoryId")
+    @Mapping(source = "assigneeId", target = "assignee",    qualifiedByName = "mapAssigneeId")
+    public abstract void update(EventUpdateDTO dto, @MappingTarget Event event);
 }
 
 

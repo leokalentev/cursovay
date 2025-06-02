@@ -138,18 +138,18 @@
 <nav>
     <div class="nav-links">
         <a href="usersHome.html">Мероприятия</a>
-        <a href="savedEventUsers.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
 
 <div class="container">
     <div class="success-message" id="successMessage" style="display: none;">
-        Мероприятие успешно обновлено!
+        <span>Мероприятие успешно обновлено!</span>
         <button class="close" onclick="document.getElementById('successMessage').style.display='none';">&times;</button>
     </div>
     <h2>Редактировать мероприятие</h2>
-    <form id="update-form">
+    <p id="no-permission" style="display: none; color: red;">У вас нет прав на редактирование этого мероприятия.</p>
+    <form id="updateEventForm">
         <div class="form-group">
             <input type="text" id="title" placeholder=" " required />
             <label>Название *</label>
@@ -165,7 +165,7 @@
             <label>Статус *</label>
         </div>
         <div class="form-group">
-            <input type="date" id="eventDate" required/>
+            <input type="date" id="eventDate" />
             <label>Дата проведения</label>
         </div>
         <div class="form-group">
@@ -180,103 +180,159 @@
             </select>
             <label>Исполнитель *</label>
         </div>
-        <button type="submit" class="submit-btn">Сохранить</button>
-        <p id="error"></p>
+        <button type="submit" class="submit-btn">Сохранить изменения</button>
+        <p id="error" class="error" style="color: red;"></p>
     </form>
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
-    if (!token) location.href = 'login.html';
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
 
     document.getElementById('logout').addEventListener('click', () => {
-      localStorage.removeItem('token');
-      location.href = '../login.html';
+        sessionStorage.removeItem('token');
+        window.location.href = 'login.html';
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const eventId = urlParams.get('id');
+    const eventId = new URLSearchParams(window.location.search).get('id');
     let originalEvent = {};
 
-    fetch('/api/users/me', { headers:{ 'Authorization':'Bearer '+token } })
-      .then(r=>r.json())
-      .then(user=>{
-        const sel = document.getElementById('assigneeId');
-        const opt = document.createElement('option');
-        opt.value = user.id; opt.textContent = user.email;
-        sel.append(opt); sel.value = user.id;
-      });
-
-    fetch(`/api/events/${eventId}`, { headers:{ 'Authorization':'Bearer '+token } })
-      .then(r=>r.json())
-      .then(event=>{
-        originalEvent = event;
-        document.getElementById('title').value = event.title||'';
-        document.getElementById('description').value = event.description||'';
-        document.getElementById('eventDate').value = event.eventDate?.slice(0,10)||'';
-
-        fetch('/api/eventStatuses', { headers:{ 'Authorization':'Bearer '+token }})
-          .then(r=>r.json())
-          .then(list=>{
-            const sel = document.getElementById('status');
-            list.forEach(st=>{
-              const o = document.createElement('option');
-              o.value = st.slug; o.textContent = st.name;
-              sel.append(o);
+    function loadUsers(selectedAssigneeId) {
+        fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(res => res.json())
+            .then(users => {
+                const sel = document.getElementById('assigneeId');
+                users.forEach(user => {
+                    const o = new Option(user.email, user.id);
+                    if (user.id === selectedAssigneeId) {
+                        o.selected = true;
+                    }
+                    sel.appendChild(o);
+                });
             });
-            sel.value = event.status||'';
-          });
+    }
 
-        fetch('/api/categories', { headers:{ 'Authorization':'Bearer '+token }})
-          .then(r=>r.json())
-          .then(list=>{
-            const sel = document.getElementById('categoryId');
-            list.forEach(cat=>{
-              const o = document.createElement('option');
-              o.value = cat.id; o.textContent = cat.name;
-              sel.append(o);
+    function loadStatuses(selectedStatus) {
+        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(res => res.json())
+            .then(list => {
+                const sel = document.getElementById('status');
+                list.forEach(st => {
+                    const o = new Option(st.name, st.slug);
+                    sel.appendChild(o);
+                });
+                if (selectedStatus) {
+                    sel.value = selectedStatus;
+                }
             });
-            if(event.categoryIds?.length) sel.value = event.categoryIds[0];
-          });
-      });
+    }
 
-    document.getElementById('update-form').addEventListener('submit', async e=>{
-      e.preventDefault();
-      const title = document.getElementById('title').value.trim();
-      const status = document.getElementById('status').value;
-      const description = document.getElementById('description').value.trim();
-      const eventDate = document.getElementById('eventDate').value;
-      const categoryId = document.getElementById('categoryId').value;
+    function loadCategories(selectedCategoryId) {
+        fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(res => res.json())
+            .then(list => {
+                const sel = document.getElementById('categoryId');
+                list.forEach(cat => {
+                    const o = new Option(cat.name, cat.id);
+                    sel.appendChild(o);
+                });
+                if (selectedCategoryId) {
+                    sel.value = selectedCategoryId;
+                }
+            });
+    }
 
-      const errEl = document.getElementById('error');
-      errEl.textContent = '';
-      if (!categoryId) {
-        errEl.textContent = 'Пожалуйста, выберите категорию.';
-        return;
-      }
+    fetch(`/api/events/${eventId}`, { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(async res => {
+            if (!res.ok) throw new Error('Ошибка загрузки мероприятия');
+            const event = await res.json();
 
-      const updated = { title, status };
-      if(description!==originalEvent.description) updated.description=description;
-      if(eventDate!==originalEvent.eventDate?.slice(0,10)) updated.eventDate=eventDate;
-      if(categoryId && !originalEvent.categoryIds?.includes(+categoryId)) updated.category_ids=[+categoryId];
+            if (!event.canEdit) {
+                document.getElementById('updateEventForm').style.display = 'none';
+                document.getElementById('no-permission').style.display = 'block';
+                return; // дальше ничего не делаем
+            }
 
-      try {
-        const res = await fetch(`/api/events/${eventId}`, {
-          method:'PUT',
-          headers:{
-            'Content-Type':'application/json',
-            'Authorization':'Bearer '+token
-          },
-          body:JSON.stringify(updated)
+            originalEvent = event;
+            document.getElementById('title').value = event.title || '';
+            document.getElementById('description').value = event.description || '';
+            document.getElementById('eventDate').value = event.eventDate?.substring(0, 10) || '';
+
+            loadStatuses(event.status);
+            loadCategories(event.category_id);
+            loadUsers(event.assignee_id);
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Не удалось загрузить мероприятие');
         });
-        if(!res.ok) throw new Error((await res.json()).detail||'Ошибка обновления');
-        document.getElementById('successMessage').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch(err) {
-        errEl.textContent = 'Ошибка обновления: ' + err.message;
-      }
+
+    document.getElementById('updateEventForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const errorEl = document.getElementById('error');
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+
+        const title       = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const status      = document.getElementById('status').value;
+        const eventDate   = document.getElementById('eventDate').value;
+        const categoryId  = document.getElementById('categoryId').value;
+        const assigneeId  = document.getElementById('assigneeId').value;
+
+        if (!title || !status || !categoryId || !assigneeId) {
+            errorEl.textContent = 'Пожалуйста, заполните все обязательные поля';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        const updatedEvent = {
+            title,
+            status,
+            eventDate,
+            category_id: +categoryId,
+            assigneeId: +assigneeId
+        };
+        if (description !== (originalEvent.description || '')) {
+            updatedEvent.description = description;
+        }
+
+        try {
+            const res = await fetch(`/api/events/${eventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(updatedEvent)
+            });
+            if (res.ok) {
+                document.getElementById('successMessage').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 5000);
+            } else if (res.status === 403) {
+                errorEl.textContent = 'У вас больше нет прав на изменение этого мероприятия.';
+                errorEl.style.display = 'block';
+                document.getElementById('updateEventForm').style.display = 'none';
+                document.getElementById('no-permission').style.display = 'block';
+            } else {
+                const errData = await res.json();
+                errorEl.textContent = errData.message || 'Ошибка обновления мероприятия';
+                errorEl.style.display = 'block';
+            }
+        } catch {
+            errorEl.textContent = 'Сетевая ошибка. Попробуйте позже';
+            errorEl.style.display = 'block';
+        }
+    });
+
+    document.querySelector('.success-message .close').addEventListener('click', () => {
+        document.getElementById('successMessage').style.display = 'none';
     });
 </script>
-
 </body>
 </html>

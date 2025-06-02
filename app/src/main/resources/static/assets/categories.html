@@ -78,7 +78,6 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы мероприятий</a>
         <a href="categories.html">Категории мероприятий</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -96,17 +95,19 @@
         </thead>
         <tbody></tbody>
     </table>
-    <button id="create-btn" class="create-btn" onclick="window.location.href='createCategory.html'">Создать категорию</button>
+    <button id="create-btn" class="create-btn" onclick="window.location.href='createCategory.html'">
+        Создать категорию
+    </button>
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
     }
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
@@ -116,7 +117,7 @@
     .then(res => {
         if (!res.ok) {
             if (res.status === 401) {
-                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
                 window.location.href = 'login.html';
             }
             throw new Error('Ошибка при загрузке: ' + res.status);
@@ -124,25 +125,22 @@
         return res.json();
     })
     .then(data => {
-      const tbody = document.querySelector('#categories-table tbody');
-      const createBtn = document.getElementById('create-btn');
-      if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3">Категории не найдены</td></tr>';
-      } else {
-          tbody.innerHTML = data.map(cat => `
-              <tr class="clickable" onclick="window.location.href='showCategory.html?id=${cat.id}'">
-                  <td>${cat.id}</td>
-                  <td>${cat.name}</td>
-                  <td>${cat.createdAt || ''}</td>
-              </tr>
-          `).join('');
-      }
-      createBtn.style.display = 'inline-block';
+        const tbody = document.querySelector('#categories-table tbody');
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3">Категории не найдены</td></tr>';
+        } else {
+            tbody.innerHTML = data.map(cat => `
+                <tr class="clickable" onclick="window.location.href='showCategory.html?id=${cat.id}'">
+                    <td>${cat.id}</td>
+                    <td>${cat.name}</td>
+                    <td>${cat.createdAt || ''}</td>
+                </tr>
+            `).join('');
+        }
     })
     .catch(err => {
         document.getElementById('error').innerText = err.message;
     });
 </script>
-
 </body>
 </html>

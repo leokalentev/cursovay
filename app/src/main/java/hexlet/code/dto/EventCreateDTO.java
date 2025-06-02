@@ -6,8 +6,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -20,8 +18,8 @@ public class EventCreateDTO {
 
     private String eventDate;
 
-    @JsonProperty("category_ids")
-    private Set<Long> categoryIds = new HashSet<>();
+    @JsonProperty("category_id")
+    private Long categoryId;
 
     @JsonProperty("assignee_id")
     private Long assigneeId;

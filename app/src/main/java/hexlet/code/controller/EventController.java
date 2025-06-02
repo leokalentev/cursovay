@@ -5,6 +5,7 @@ import hexlet.code.dto.EventDTO;
 import hexlet.code.dto.EventUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.EventMapper;
+import hexlet.code.model.User;
 import hexlet.code.repository.EventRepository;
 import hexlet.code.specification.EventSpecification;
 import hexlet.code.utils.UserUtils;
@@ -43,6 +44,8 @@ public class EventController {
     @Autowired
     private UserUtils userUtils;
 
+    private static final String ADMIN_EMAIL = "admin@example.com";
+
     @GetMapping("/events")
     public ResponseEntity<List<EventDTO>> index(EventDTO params) {
         var spec = specBuilder.build(params);
@@ -58,49 +61,56 @@ public class EventController {
     public EventDTO show(@PathVariable Long id) {
         var event = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-        return mapper.map(event);
+        var currentUser = userUtils.getCurrentUser();
+        var dto = mapper.map(event);
+        dto.setCanEdit(event.getAssignee().getId().equals(currentUser.getId()) || isAdmin(currentUser));
+        return dto;
     }
 
     @PostMapping("/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventDTO create(@RequestBody @Valid EventCreateDTO dto) {
+        var currentUser = userUtils.getCurrentUser();
         var event = mapper.map(dto);
+        event.setAssignee(currentUser);
         repository.save(event);
-        return mapper.map(event);
+        var res = mapper.map(event);
+        res.setCanEdit(true);
+        return res;
     }
 
     @PutMapping("/events/{id}")
     public EventDTO update(@PathVariable Long id, @RequestBody EventUpdateDTO dto) {
         var event = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
         var currentUser = userUtils.getCurrentUser();
-        if (!event.getAssignee().getId().equals(currentUser.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет прав на изменения");
-        }
 
-        if (!dto.getTitle().isPresent() || dto.getTitle().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле title обязательно и не может быть пустым");
-        }
-        if (!dto.getStatus().isPresent() || dto.getStatus().get().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поле status обязательно и не может быть пустым");
+        if (!event.getAssignee().getId().equals(currentUser.getId()) && !isAdmin(currentUser)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет прав на изменения");
         }
 
         mapper.update(dto, event);
         repository.save(event);
-        return mapper.map(event);
+        var res = mapper.map(event);
+        res.setCanEdit(true);
+        return res;
     }
 
     @DeleteMapping("/events/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void destroy(@PathVariable Long id) {
         var event = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Нет прав на изменения"));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
         var currentUser = userUtils.getCurrentUser();
-        if (!event.getAssignee().getId().equals(currentUser.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+
+        if (!event.getAssignee().getId().equals(currentUser.getId()) && !isAdmin(currentUser)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет прав на удаление");
         }
         repository.delete(event);
     }
+
+    private boolean isAdmin(User user) {
+        return "Admin".equalsIgnoreCase(user.getFirstName()) || "admin@kpfu.ru".equalsIgnoreCase(user.getEmail());
+    }
 }
+

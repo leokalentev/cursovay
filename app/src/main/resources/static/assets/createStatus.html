@@ -125,7 +125,6 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы мероприятий</a>
         <a href="categories.html">Категории мероприятий</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -147,26 +146,26 @@
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
     }
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
-    document.getElementById('createStatusForm').addEventListener('submit', async function (event) {
-        event.preventDefault();
+    document.getElementById('createStatusForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
 
         const name = document.getElementById('name').value.trim();
         const slug = document.getElementById('slug').value.trim();
-        const errorElem = document.getElementById('error');
+        const errorEl = document.getElementById('error');
 
         if (!name || !slug) {
-            errorElem.innerText = 'Название и slug обязательны';
-            errorElem.style.display = 'block';
+            errorEl.innerText = 'Название и slug обязательны';
+            errorEl.style.display = 'block';
             return;
         }
 
@@ -181,19 +180,18 @@
             });
 
             if (response.ok) {
-                alert('Статус успешно создан!');
+                // Перенаправляем обратно на список
                 window.location.href = 'statuses.html';
             } else {
                 const errorData = await response.json();
-                errorElem.innerText = errorData.detail || 'Ошибка создания';
-                errorElem.style.display = 'block';
+                errorEl.innerText = errorData.detail || 'Ошибка создания';
+                errorEl.style.display = 'block';
             }
-        } catch (error) {
-            errorElem.innerText = 'Ошибка сервера';
-            errorElem.style.display = 'block';
+        } catch {
+            errorEl.innerText = 'Ошибка сервера';
+            errorEl.style.display = 'block';
         }
     });
 </script>
-
 </body>
 </html>

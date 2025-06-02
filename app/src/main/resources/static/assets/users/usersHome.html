@@ -5,20 +5,17 @@
     <title>Главная — Мероприятия (Пользователь)</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* Основной контент */
         .container {
             padding: 2rem;
             max-width: 1400px;
             margin: 0 auto;
         }
-
         h1 {
             color: #2c3e50;
             margin-bottom: 2rem;
             font-size: 2rem;
             text-align: center;
         }
-
         /* Сообщение об успехе */
         .success-message {
             background: #d4edda;
@@ -30,7 +27,6 @@
             position: relative;
             animation: fade-in 0.5s;
         }
-
         .success-message button.close {
             position: absolute;
             top: 0.5rem;
@@ -40,12 +36,10 @@
             font-size: 1.2rem;
             cursor: pointer;
         }
-
         @keyframes fade-in {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         /* Фильтры */
         .filters {
             display: flex;
@@ -57,7 +51,6 @@
             border-radius: 10px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
-
         .filters input,
         .filters select,
         .filters button {
@@ -67,36 +60,30 @@
             font-size: 1rem;
             transition: all 0.3s ease;
         }
-
         .filters input:focus,
         .filters select:focus {
             border-color: #3B71CA;
             outline: none;
             box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
         }
-
         #apply-filters {
             background: #3B71CA;
             color: white;
             border: none;
             cursor: pointer;
         }
-
         #apply-filters:hover {
             background: #2c5c99;
         }
-
         #clear-filters {
             background: #e74c3c;
             color: white;
             border: none;
             cursor: pointer;
         }
-
         #clear-filters:hover {
             background: #c0392b;
         }
-
         /* Кнопка создания */
         .create-btn {
             background: #2ecc71;
@@ -110,58 +97,48 @@
             margin-bottom: 2rem;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-
         .create-btn:hover {
             transform: translateY(-2px);
         }
-
         .create-btn:active {
             transform: translateY(0);
         }
-
         /* Карточки мероприятий */
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 2rem;
         }
-
         .card {
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
             overflow: hidden;
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
         }
-
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
         }
-
         .card h2 {
             margin: 0 0 1rem;
             font-size: 1.5rem;
             color: #2c3e50;
         }
-
         .card p {
             margin: 0 0 1.5rem;
             color: #555;
             line-height: 1.6;
             flex-grow: 1;
         }
-
         .btn-group {
             display: flex;
             gap: 0.5rem;
             margin-top: auto;
         }
-
         .btn-group button {
             padding: 0.8rem 1.5rem;
             border: none;
@@ -170,46 +147,19 @@
             font-size: 0.9rem;
             transition: background 0.3s ease;
         }
-
         .view-btn {
             background: #3498db;
             color: white;
         }
-
         .view-btn:hover {
             background: #2980b9;
         }
-
         .edit-btn {
             background: #f39c12;
             color: white;
         }
-
         .edit-btn:hover {
             background: #e67e22;
-        }
-
-        /* Избранное */
-        .fav {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #999;
-            transition: color 0.3s ease;
-            user-select: none;
-        }
-
-        .fav.active {
-            color: #e74c3c;
-            animation: heartbeat 0.5s ease;
-        }
-
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -217,7 +167,6 @@
 <nav>
     <div class="nav-links">
         <a href="usersHome.html">Мероприятия</a>
-        <a href="savedEventUsers.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -235,26 +184,15 @@
     <button id="create-btn" class="create-btn">Создать мероприятие</button>
     <div class="cards" id="cards-container"></div>
 </div>
-
 <script>
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) location.href = 'login.html';
 
-    function getFavs() {
-      return JSON.parse(localStorage.getItem('favourites') || '[]');
-    }
-    function toggleFav(id) {
-      const favs = getFavs();
-      const idx = favs.indexOf(id);
-      if (idx >= 0) favs.splice(idx,1);
-      else favs.push(id);
-      localStorage.setItem('favourites', JSON.stringify(favs));
-    }
-
     document.getElementById('logout').onclick = () => {
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
       location.href = '../login.html';
     };
+
     document.getElementById('create-btn').onclick = () => {
       location.href = 'createEventUsers.html';
     };
@@ -262,22 +200,23 @@
     let statuses = [], categories = [];
     async function loadLookups() {
       const [stRes, catRes] = await Promise.all([
-        fetch('/api/eventStatuses', { headers:{'Authorization':'Bearer '+token}}),
-        fetch('/api/categories',      { headers:{'Authorization':'Bearer '+token}})
+        fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } }),
+        fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
       ]);
-      statuses   = await stRes.json();
+      statuses = await stRes.json();
       categories = await catRes.json();
-
       const stSel = document.getElementById('filter-status');
       statuses.forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.slug; opt.textContent = s.name;
+        opt.value = s.slug;
+        opt.textContent = s.name;
         stSel.appendChild(opt);
       });
       const catSel = document.getElementById('filter-category');
       categories.forEach(c => {
         const opt = document.createElement('option');
-        opt.value = c.id; opt.textContent = c.name;
+        opt.value = c.id;
+        opt.textContent = c.name;
         catSel.appendChild(opt);
       });
     }
@@ -290,34 +229,29 @@
       const d = document.getElementById('filter-date').value;
       if (t) params.set('title', t);
       if (s) params.set('status', s);
-      if (c) params.set('category_ids', c);
+      if (c) params.set('category_ids', [c]); // Исправлено для передачи массива
       if (d) params.set('eventDate', d);
-
       const [userRes, eventsRes] = await Promise.all([
-        fetch('/api/users/me',      { headers:{'Authorization':'Bearer '+token}}),
-        fetch(`/api/events?${params}`, { headers:{'Authorization':'Bearer '+token}})
+        fetch('/api/users/me', { headers: { 'Authorization': 'Bearer ' + token } }),
+        fetch(`/api/events?${params}`, { headers: { 'Authorization': 'Bearer ' + token } })
       ]);
       if (!userRes.ok) throw new Error('Не удалось получить профиль');
-      if (!eventsRes.ok) throw new Error('Ошибка загрузки мероприятий: '+eventsRes.status);
-
-      const user   = await userRes.json();
+      if (!eventsRes.ok) throw new Error('Ошибка загрузки мероприятий: ' + eventsRes.status);
+      const user = await userRes.json();
       const events = await eventsRes.json();
       renderCards(events, user.id);
     }
 
     function renderCards(events, currentUserId) {
-      const favs = getFavs();
       const cont = document.getElementById('cards-container');
       if (!events.length) {
         cont.innerHTML = '<p>Мероприятий не найдено.</p>';
         return;
       }
       cont.innerHTML = events.map(e => {
-        const canEdit = e.assignee_id === currentUserId;
-        const heartClass = favs.includes(e.id) ? 'fav active' : 'fav';
+        const canEdit = e.canEdit !== undefined ? e.canEdit : (e.assignee_id === currentUserId); // Проверка canEdit с бэка
         return `
           <div class="card">
-            <div class="${heartClass}" onclick="toggleFav(${e.id}); loadEvents();">❤</div>
             <h2>${e.title}</h2>
             <p>${e.description || 'Описание отсутствует'}</p>
             <div class="btn-group">
@@ -330,7 +264,7 @@
 
     document.getElementById('apply-filters').onclick = () => loadEvents().catch(e => document.getElementById('error').textContent = e.message);
     document.getElementById('clear-filters').onclick = () => {
-      ['filter-title','filter-status','filter-category','filter-date'].forEach(id => document.getElementById(id).value = '');
+      ['filter-title', 'filter-status', 'filter-category', 'filter-date'].forEach(id => document.getElementById(id).value = '');
       loadEvents().catch(e => document.getElementById('error').textContent = e.message);
     };
 

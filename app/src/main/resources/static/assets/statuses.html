@@ -73,7 +73,6 @@
     <a href="home.html">Мероприятия</a>
     <a href="statuses.html">Статусы мероприятий</a>
     <a href="categories.html">Категории мероприятий</a>
-    <a href="savedEvent.html">Избранное</a>
   </div>
   <button id="logout">Выйти</button>
 </nav>
@@ -92,17 +91,19 @@
     </thead>
     <tbody></tbody>
   </table>
-  <button class="create-btn" onclick="window.location.href='createStatus.html'">Создать статус</button>
+  <button class="create-btn" onclick="window.location.href='createStatus.html'">
+    Создать статус
+  </button>
 </div>
 
 <script>
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (!token) {
       window.location.href = 'login.html';
   }
 
   document.getElementById('logout').addEventListener('click', () => {
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
       window.location.href = 'login.html';
   });
 
@@ -112,7 +113,7 @@
   .then(res => {
       if (!res.ok) {
           if (res.status === 401) {
-              localStorage.removeItem('token');
+              sessionStorage.removeItem('token');
               window.location.href = 'login.html';
           }
           throw new Error('Ошибка при загрузке: ' + res.status);
@@ -120,24 +121,23 @@
       return res.json();
   })
   .then(data => {
-    const tbody = document.querySelector('#statuses-table tbody');
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">Статусы не найдены</td></tr>';
-        return;
-    }
-    tbody.innerHTML = data.map(status => `
-        <tr onclick="window.location.href='showStatus.html?id=${status.id}'" style="cursor:pointer;">
-            <td>${status.id}</td>
-            <td>${status.name}</td>
-            <td>${status.slug}</td>
-            <td>${status.createdAt || ''}</td>
-        </tr>
-    `).join('');
+      const tbody = document.querySelector('#statuses-table tbody');
+      if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">Статусы не найдены</td></tr>';
+          return;
+      }
+      tbody.innerHTML = data.map(status => `
+          <tr class="clickable" onclick="window.location.href='showStatus.html?id=${status.id}'">
+              <td>${status.id}</td>
+              <td>${status.name}</td>
+              <td>${status.slug}</td>
+              <td>${status.createdAt || ''}</td>
+          </tr>
+      `).join('');
   })
   .catch(err => {
       document.getElementById('error').innerText = err.message;
   });
 </script>
-
 </body>
 </html>

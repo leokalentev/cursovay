@@ -93,7 +93,6 @@
 <nav>
     <div class="nav-links">
         <a href="usersHome.html">Мероприятия</a>
-        <a href="savedEventUsers.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -101,16 +100,14 @@
 <div class="container">
     <h2>Информация о мероприятии</h2>
     <div class="event-info">
-        <p><strong>ID:</strong> <span id="event-id"></span></p>
         <p><strong>Название:</strong> <span id="event-title"></span></p>
         <p><strong>Описание:</strong> <span id="event-description"></span></p>
         <p><strong>Статус:</strong> <span id="event-status"></span></p>
         <p><strong>Дата проведения:</strong> <span id="event-date"></span></p>
-        <p><strong>Категории:</strong> <span id="event-categories"></span></p>
+        <p><strong>Категория:</strong> <span id="event-category"></span></p>
         <p><strong>Исполнитель:</strong> <span id="event-assignee"></span></p>
         <p><strong>Создано:</strong> <span id="event-createdAt"></span></p>
     </div>
-
     <div class="btn-group">
         <button id="edit-event">Изменить</button>
         <button id="delete-event">Удалить</button>
@@ -118,60 +115,55 @@
 </div>
 
 <script>
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "login.html";
-    }
+    const token = sessionStorage.getItem("token");
+    if (!token) window.location.href = "login.html";
 
-    document.getElementById("logout").addEventListener("click", () => {
-        localStorage.removeItem("token");
-        location.href = '../login.html';
+    document.getElementById("logout")?.addEventListener("click", () => {
+        sessionStorage.removeItem("token");
+        window.location.href = "login.html";
     });
 
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get("id");
 
     fetch(`/api/events/${eventId}`, {
-        headers: { Authorization: "Bearer " + token },
+        headers: { Authorization: "Bearer " + token }
     })
-    .then((response) => {
-        if (!response.ok) {
-            throw new Error("Ошибка при загрузке мероприятия");
-        }
-        return response.json();
+    .then(r => {
+        if (!r.ok) throw new Error("Ошибка при загрузке мероприятия");
+        return r.json();
     })
-    .then(async (event) => {
-        document.getElementById("event-id").textContent = event.id;
+    .then(async event => {
         document.getElementById("event-title").textContent = event.title || "—";
         document.getElementById("event-description").textContent = event.description || "—";
         document.getElementById("event-status").textContent = event.status || "—";
         document.getElementById("event-date").textContent = event.eventDate || "—";
         document.getElementById("event-createdAt").textContent = event.createdAt || "—";
 
-        const categoriesElement = document.getElementById("event-categories");
-        if (Array.isArray(event.category_ids) && event.category_ids.length > 0) {
+        const categoryElement = document.getElementById("event-category");
+        if (event.category_id) {
             try {
-                const categoryPromises = event.category_ids.map((id) =>
-                    fetch(`/api/categories/${id}`, {
-                        headers: { Authorization: "Bearer " + token },
-                    }).then((res) => (res.ok ? res.json() : null))
-                );
-                const categories = await Promise.all(categoryPromises);
-                const categoryNames = categories.filter((cat) => cat).map((cat) => cat.name);
-                categoriesElement.textContent = categoryNames.length > 0 ? categoryNames.join(", ") : "—";
-            } catch (err) {
-                console.error("Ошибка загрузки категорий:", err);
-                categoriesElement.textContent = "Ошибка";
+                const res = await fetch(`/api/categories/${event.category_id}`, {
+                    headers: { Authorization: "Bearer " + token }
+                });
+                if (res.ok) {
+                    const cat = await res.json();
+                    categoryElement.textContent = cat.name || "—";
+                } else {
+                    categoryElement.textContent = "—";
+                }
+            } catch {
+                categoryElement.textContent = "Ошибка";
             }
         } else {
-            categoriesElement.textContent = "—";
+            categoryElement.textContent = "—";
         }
 
         const assigneeElement = document.getElementById("event-assignee");
         if (event.assignee_id) {
             try {
                 const res = await fetch(`/api/users/${event.assignee_id}`, {
-                    headers: { Authorization: "Bearer " + token },
+                    headers: { Authorization: "Bearer " + token }
                 });
                 if (res.ok) {
                     const user = await res.json();
@@ -179,41 +171,37 @@
                 } else {
                     assigneeElement.textContent = "—";
                 }
-            } catch (err) {
-                console.error("Ошибка загрузки пользователя:", err);
+            } catch {
                 assigneeElement.textContent = "Ошибка";
             }
         } else {
             assigneeElement.textContent = "—";
         }
     })
-    .catch((err) => {
-        console.error("Ошибка:", err);
+    .catch(err => {
+        console.error(err);
         alert("Не удалось загрузить информацию о мероприятии");
     });
 
-    document.getElementById('edit-event').addEventListener('click', () => {
+    document.getElementById("edit-event").addEventListener("click", () => {
         window.location.href = `updateEventUsers.html?id=${eventId}`;
     });
 
-    document.getElementById('delete-event').addEventListener('click', async () => {
-        if (!confirm('Вы действительно хотите удалить это мероприятие?')) {
-            return;
-        }
+    document.getElementById("delete-event").addEventListener("click", async () => {
+        if (!confirm("Вы действительно хотите удалить это мероприятие?")) return;
         try {
             const res = await fetch(`/api/events/${eventId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + token }
+                method: "DELETE",
+                headers: { Authorization: "Bearer " + token }
             });
             if (res.status === 204) {
-                alert('Мероприятие успешно удалено');
-                window.location.href = 'usersHome.html';
+                alert("Мероприятие успешно удалено");
+                window.location.href = "usersHome.html";
             } else {
-                const err = await res.json();
-                throw new Error(err.detail || 'Ошибка удаления мероприятия');
+                const errObj = await res.json();
+                throw new Error(errObj.detail || "Ошибка удаления");
             }
         } catch (e) {
-            console.error(e);
             alert(e.message);
         }
     });

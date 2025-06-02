@@ -1,16 +1,11 @@
 package hexlet.code.specification;
 
 import hexlet.code.dto.EventDTO;
-import hexlet.code.model.Category;
 import hexlet.code.model.Event;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 @Component
 public class EventSpecification {
@@ -18,7 +13,7 @@ public class EventSpecification {
     public Specification<Event> build(EventDTO params) {
         return Specification.where(titleContains(params.getTitle()))
                 .and(statusIs(params.getStatus()))
-                .and(hasAnyCategory(params.getCategoryIds()))
+                .and(hasCategory(params.getCategoryId()))
                 .and(eventDateIs(params.getEventDate()));
     }
 
@@ -38,14 +33,12 @@ public class EventSpecification {
                 cb.equal(root.get("eventStatus").get("slug"), slug);
     }
 
-    private Specification<Event> hasAnyCategory(Set<Long> categoryIds) {
-        if (CollectionUtils.isEmpty(categoryIds)) {
+    private Specification<Event> hasCategory(Long categoryId) {
+        if (categoryId == null) {
             return (root, query, cb) -> cb.conjunction();
         }
-        return (root, query, cb) -> {
-            Join<Event, Category> categories = root.join("categories", JoinType.LEFT);
-            return categories.get("id").in(categoryIds);
-        };
+        return (root, query, cb) ->
+                cb.equal(root.get("category").get("id"), categoryId);
     }
 
     private Specification<Event> eventDateIs(String date) {
@@ -58,4 +51,3 @@ public class EventSpecification {
         };
     }
 }
-

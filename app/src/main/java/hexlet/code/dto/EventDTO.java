@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Set;
 
 @Getter
 @Setter
@@ -17,8 +16,8 @@ public class EventDTO {
 
     private String status;
 
-    @JsonProperty("category_ids")
-    private Set<Long> categoryIds;
+    @JsonProperty("category_id")
+    private Long categoryId;
 
     @JsonProperty("assignee_id")
     private Long assigneeId;
@@ -26,4 +25,5 @@ public class EventDTO {
     private String createdAt;
 
     private String eventDate;
+    private Boolean canEdit;
 }

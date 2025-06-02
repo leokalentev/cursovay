@@ -34,11 +34,29 @@
             left: 50%;
             transform: translateX(-50%);
         }
-        .form-group {
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .input-group, .form-group {
             margin-bottom: 2rem;
             position: relative;
         }
-        .form-group label {
+        .input-group input, .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .input-group input:focus, .form-group input:focus {
+            border-color: #3B71CA;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
+        }
+        .input-group label, .form-group label {
             position: absolute;
             top: 12px;
             left: 15px;
@@ -49,20 +67,8 @@
             background: white;
             padding: 0 4px;
         }
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-        }
-        .form-group input:focus {
-            border-color: #3B71CA;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(59, 113, 202, 0.2);
-        }
+        .input-group input:not(:placeholder-shown) + label,
+        .input-group input:focus + label,
         .form-group input:not(:placeholder-shown) + label,
         .form-group input:focus + label {
             top: -8px;
@@ -81,7 +87,6 @@
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 1rem;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .submit-btn:hover {
@@ -90,13 +95,28 @@
         .submit-btn:active {
             transform: scale(0.98);
         }
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-            .nav-links {
-                display: none;
-            }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .error {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: none;
         }
     </style>
 </head>
@@ -107,56 +127,79 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы мероприятий</a>
         <a href="categories.html">Категории мероприятий</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
 
-<div class="container">
+<<div class="container">
     <h2>Редактировать статус</h2>
-    <form id="update-form">
+    <form id="updateStatusForm">
         <div class="form-group">
-            <input type="text" id="name" placeholder=" " required>
+            <input type="text" id="name" placeholder=" " required />
             <label for="name">Название</label>
         </div>
         <div class="form-group">
-            <input type="text" id="slug" placeholder=" " required>
+            <input type="text" id="slug" placeholder=" " required />
             <label for="slug">Slug</label>
         </div>
         <button type="submit" class="submit-btn">Сохранить</button>
+        <button type="button" class="delete-btn" id="delete-status">Удалить</button>
+        <p id="error" class="error"></p>
     </form>
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const statusId = params.get('id');
-    let original = {};
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusId = urlParams.get('id');
+    let originalStatus = {};
 
     fetch(`/api/eventStatuses/${statusId}`, {
         headers: { 'Authorization': 'Bearer ' + token }
     })
-    .then(res => res.json())
-    .then(dto => {
-        original = dto;
-        document.getElementById('name').value = dto.name || '';
-        document.getElementById('slug').value = dto.slug || '';
+    .then(res => {
+        if (!res.ok) throw new Error('Ошибка загрузки статуса');
+        return res.json();
+    })
+    .then(st => {
+        originalStatus = st;
+        document.getElementById('name').value = st.name || '';
+        document.getElementById('slug').value = st.slug || '';
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Не удалось загрузить статус');
     });
 
-    document.getElementById('update-form').addEventListener('submit', async e => {
+    document.getElementById('updateStatusForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        const errorEl = document.getElementById('error');
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
 
-        const payload = {
-            name: document.getElementById('name').value.trim(),
-            slug: document.getElementById('slug').value.trim(),
-        };
+        const name = document.getElementById('name').value.trim();
+        const slug = document.getElementById('slug').value.trim();
+
+        if (!name || !slug) {
+            errorEl.innerText = 'Название и slug обязательны';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        // Если ничего не поменялось, просто вернуться
+        if (name === originalStatus.name && slug === originalStatus.slug) {
+            window.location.href = `showStatus.html?id=${statusId}`;
+            return;
+        }
 
         try {
             const res = await fetch(`/api/eventStatuses/${statusId}`, {
@@ -165,20 +208,40 @@
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ name, slug })
             });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.detail || 'Ошибка обновления');
+            if (res.ok) {
+                window.location.href = `showStatus.html?id=${statusId}`;
+            } else {
+                const errData = await res.json();
+                errorEl.innerText = errData.detail || 'Ошибка обновления';
+                errorEl.style.display = 'block';
             }
-            alert('Статус успешно обновлён');
-            window.location.href = `showStatus.html?id=${statusId}`;
-        } catch (err) {
-            console.error(err);
-            alert(err.message);
+        } catch {
+            errorEl.innerText = 'Ошибка сети';
+            errorEl.style.display = 'block';
+        }
+    });
+
+    document.getElementById('delete-status').addEventListener('click', async () => {
+        if (!confirm('Вы действительно хотите удалить этот статус?')) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/eventStatuses/${statusId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 204) {
+                window.location.href = 'statuses.html';
+            } else {
+                const errData = await res.json();
+                alert(errData.detail || 'Ошибка удаления статуса');
+            }
+        } catch {
+            alert('Ошибка сети');
         }
     });
 </script>
-
 </body>
 </html>

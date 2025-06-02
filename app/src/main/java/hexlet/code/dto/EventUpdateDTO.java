@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.openapitools.jackson.nullable.JsonNullable;
 
-import java.util.Set;
 
 @Getter
 @Setter
@@ -18,8 +17,8 @@ public class EventUpdateDTO {
 
     private JsonNullable<String> status = JsonNullable.undefined();
 
-    @JsonProperty("category_ids")
-    private JsonNullable<Set<Long>> categoryIds = JsonNullable.undefined();
+    @JsonProperty("category_id")
+    private JsonNullable<Long> categoryId = JsonNullable.undefined();
 
     private JsonNullable<Long> assigneeId = JsonNullable.undefined();
 }

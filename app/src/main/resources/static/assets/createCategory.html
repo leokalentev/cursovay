@@ -125,7 +125,6 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы мероприятий</a>
         <a href="categories.html">Категории мероприятий</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -133,29 +132,28 @@
 <div class="container">
     <h2>Создать категорию мероприятия</h2>
     <form id="createCategoryForm">
-        <div class="form-group">
+        <div class="input-group">
             <input type="text" id="name" placeholder=" " required />
             <label for="name">Название категории</label>
         </div>
         <button type="submit" class="submit-btn">Создать</button>
-        <p id="error" class="error"></p>
+        <p id="error" class="error">Ошибка создания категории</p>
     </form>
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
     }
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
     document.getElementById('createCategoryForm').addEventListener('submit', async function (event) {
         event.preventDefault();
-
         const name = document.getElementById('name').value.trim();
         const errorEl = document.getElementById('error');
 
@@ -176,19 +174,18 @@
             });
 
             if (response.ok) {
-                alert('Категория успешно создана!');
+                // После успешного создания возвращаемся на список
                 window.location.href = 'categories.html';
             } else {
                 const errorData = await response.json();
                 errorEl.innerText = errorData.detail || 'Ошибка создания';
                 errorEl.style.display = 'block';
             }
-        } catch (error) {
+        } catch {
             errorEl.innerText = 'Ошибка сервера';
             errorEl.style.display = 'block';
         }
     });
 </script>
-
 </body>
 </html>

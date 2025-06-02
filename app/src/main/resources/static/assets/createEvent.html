@@ -164,7 +164,6 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы</a>
         <a href="categories.html">Категории</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -173,7 +172,7 @@
     <h2>Создать мероприятие</h2>
 
     <div class="success-message" style="display: none;">
-        Мероприятие успешно создано!
+        <span>Мероприятие успешно создано!</span>
         <button class="close">&times;</button>
     </div>
 
@@ -214,33 +213,30 @@
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) window.location.href = 'login.html';
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
-    fetch('/api/eventStatuses', { headers: { 'Authorization': 'Bearer ' + token } })
-      .then(res => res.json())
-      .then(data => {
-          const statusSelect = document.getElementById('status');
-          data.forEach(status => {
-              const option = new Option(status.name, status.slug);
-              statusSelect.appendChild(option);
-          });
-      });
+    async function loadSelect(url, selectId) {
+        try {
+            const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            const select = document.getElementById(selectId);
+            data.forEach(item => {
+                const option = new Option(item.name, item.slug || item.id);
+                select.appendChild(option);
+            });
+        } catch (e) {
+            console.error(`Ошибка загрузки для ${selectId}:`, e);
+        }
+    }
 
-    fetch('/api/categories', { headers: { 'Authorization': 'Bearer ' + token } })
-      .then(res => res.json())
-      .then(data => {
-          const categorySelect = document.getElementById('categoryId');
-          data.forEach(cat => {
-              const option = new Option(cat.name, cat.id);
-              categorySelect.appendChild(option);
-          });
-      });
+    loadSelect('/api/eventStatuses', 'status');
+    loadSelect('/api/categories', 'categoryId');
 
     fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token } })
       .then(res => res.json())
@@ -258,12 +254,12 @@
         const error = document.getElementById('error');
         error.style.display = 'none';
 
-        const title = document.getElementById('title').value.trim();
+        const title       = document.getElementById('title').value.trim();
         const description = document.getElementById('description').value.trim();
-        const status = document.getElementById('status').value;
-        const eventDate = document.getElementById('eventDate').value;
-        const categoryId = document.getElementById('categoryId').value;
-        const assigneeId = document.getElementById('assigneeId').value;
+        const status      = document.getElementById('status').value;
+        const eventDate   = document.getElementById('eventDate').value;
+        const categoryId  = document.getElementById('categoryId').value;
+        const assigneeId  = document.getElementById('assigneeId').value;
 
         if (!title || !status || !categoryId || !assigneeId) {
             error.textContent = 'Пожалуйста, заполните все обязательные поля';
@@ -283,8 +279,8 @@
                     description,
                     status,
                     eventDate,
-                    category_ids: [categoryId],
-                    assignee_id: assigneeId
+                    category_id: +categoryId,
+                    assignee_id: +assigneeId
                 })
             });
 
@@ -309,6 +305,5 @@
         document.querySelector('.success-message').style.display = 'none';
     });
 </script>
-
 </body>
 </html>

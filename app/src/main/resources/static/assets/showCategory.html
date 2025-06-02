@@ -96,7 +96,6 @@
         <a href="home.html">Мероприятия</a>
         <a href="statuses.html">Статусы мероприятий</a>
         <a href="categories.html">Категории мероприятий</a>
-        <a href="savedEvent.html">Избранное</a>
     </div>
     <button id="logout">Выйти</button>
 </nav>
@@ -115,13 +114,13 @@
 </div>
 
 <script>
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
     }
 
     document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         window.location.href = 'login.html';
     });
 
@@ -142,7 +141,7 @@
     })
     .catch(err => {
         console.error(err);
-        alert('Ошибка загрузки категории');
+        alert('Не удалось загрузить информацию о категории');
     });
 
     document.getElementById('edit-category').addEventListener('click', () => {

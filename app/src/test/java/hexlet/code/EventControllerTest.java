@@ -111,7 +111,7 @@ public class EventControllerTest {
         e.setEventDate(LocalDate.now().plusDays(1));
         e.setAssignee(assignee);
         e.setEventStatus(status);
-        e.setCategories(Set.of(cat));
+        e.setCategory(cat);
         return repository.save(e);
     }
 
@@ -125,7 +125,7 @@ public class EventControllerTest {
         e.setEventDate(LocalDate.now().plusDays(1));
         e.setAssignee(assignee);
         e.setEventStatus(status);
-        e.setCategories(Set.of(cat));
+        e.setCategory(cat);
         return repository.save(e);
     }
     @Test
@@ -185,15 +185,15 @@ public class EventControllerTest {
     public void filterByCategory() throws Exception {
         String token = createUserAndGetToken();
         Event e = createAndSaveEvent();
-        Long catId = e.getCategories().iterator().next().getId();
+        Long catId = e.getCategory().getId();
 
         mockMvc.perform(get("/api/events")
-                        .param("categoryIds", catId.toString())
+                        .param("categoryId", catId.toString())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Total-Count", "1"))
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].category_ids[0]").value(catId));
+                .andExpect(jsonPath("$[0].category_id").value(catId));
     }
 
     @Test
@@ -213,8 +213,7 @@ public class EventControllerTest {
                 a -> a.node("eventDate").isNotNull(),
                 a -> a.node("status").isEqualTo(e.getEventStatus().getSlug()),
                 a -> a.node("assignee_id").isEqualTo(e.getAssignee().getId()),
-                a -> a.node("category_ids").isArray(),
-                a -> a.node("category_ids[0]").isEqualTo(e.getCategories().iterator().next().getId())
+                a -> a.node("category_id").isEqualTo(e.getCategory().getId())
         );
     }
 
@@ -231,7 +230,7 @@ public class EventControllerTest {
         dto.setEventDate(LocalDate.now().plusDays(2).toString());
         dto.setAssigneeId(assignee.getId());
         dto.setStatus(status.getSlug());
-        dto.setCategoryIds(Set.of(cat.getId()));
+        dto.setCategoryId(cat.getId());
 
         MvcResult mvcResult = mockMvc.perform(post("/api/events")
                         .header("Authorization", "Bearer " + token)
@@ -246,8 +245,8 @@ public class EventControllerTest {
                 a -> a.node("description").isEqualTo(dto.getDescription()),
                 a -> a.node("eventDate").isNotNull(),
                 a -> a.node("status").isEqualTo(dto.getStatus()),
-                a -> a.node("assignee_id").isEqualTo(dto.getAssigneeId()),
-                a -> a.node("category_ids").isArray()
+                a -> a.node("assignee_id").isNotNull(),
+                a -> a.node("category_id").isEqualTo(dto.getCategoryId())
         );
     }
 
@@ -266,7 +265,7 @@ public class EventControllerTest {
         dto.setEventDate(JsonNullable.of(LocalDate.now().plusDays(5).toString()));
         dto.setAssigneeId(JsonNullable.of(newAssignee.getId()));
         dto.setStatus(JsonNullable.of(newStatus.getSlug()));
-        dto.setCategoryIds(JsonNullable.of(Set.of(newCat.getId())));
+        dto.setCategoryId(JsonNullable.of((newCat.getId())));
 
         MvcResult mvcResult = mockMvc.perform(put("/api/events/{id}", e.getId())
                         .header("Authorization", "Bearer " + token)
@@ -282,7 +281,7 @@ public class EventControllerTest {
                 a -> a.node("eventDate").isNotNull(),
                 a -> a.node("status").isEqualTo(dto.getStatus().get()),
                 a -> a.node("assignee_id").isEqualTo(dto.getAssigneeId().get()),
-                a -> a.node("category_ids").isArray()
+                a -> a.node("category_id").isEqualTo(dto.getCategoryId().get())
         );
     }
 
