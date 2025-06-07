@@ -13,8 +13,6 @@ public class DotenvLoader {
     public void loadEnv() {
         try {
             Dotenv dotenv = Dotenv.load();
-            System.setProperty("SENTRY_DSN", dotenv.get("SENTRY_DSN"));
-            System.setProperty("SENTRY_ENVIRONMENT", dotenv.get("SENTRY_ENVIRONMENT", "development"));
             System.out.println(".env переменные загружены");
         } catch (DotenvException ex) {
             System.out.println("Не удалось загрузить .env: " + ex.getMessage());

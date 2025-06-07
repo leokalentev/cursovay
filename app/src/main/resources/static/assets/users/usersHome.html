@@ -229,7 +229,7 @@
       const d = document.getElementById('filter-date').value;
       if (t) params.set('title', t);
       if (s) params.set('status', s);
-      if (c) params.set('category_ids', [c]); // Исправлено для передачи массива
+      if (c) params.set('categoryId', c);
       if (d) params.set('eventDate', d);
       const [userRes, eventsRes] = await Promise.all([
         fetch('/api/users/me', { headers: { 'Authorization': 'Bearer ' + token } }),
