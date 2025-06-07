@@ -1,8 +1,11 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/cursovay
-    username: postgres
-    password: Leonigleo1024@+
+    url: ${JDBC_DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
